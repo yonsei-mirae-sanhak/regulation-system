@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>관리자 로그인 — 규정관리시스템</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" href="../css/common.css">
+<style>
+body { display: flex; align-items: center; justify-content: center; min-height: 100vh; background: var(--navy); }
+.login-card {
+  background: var(--white); border-radius: 14px;
+  padding: 40px 44px; width: 380px; max-width: calc(100vw - 40px);
+  box-shadow: 0 24px 60px rgba(0,0,0,.4);
+  animation: slideUp .25s ease;
+}
+@keyframes slideUp { from{transform:translateY(20px);opacity:0} to{transform:translateY(0);opacity:1} }
+.login-logo { display: flex; align-items: center; gap: 10px; margin-bottom: 28px; }
+.login-logo-icon { width: 36px; height: 36px; background: var(--accent); border-radius: 8px; display: grid; place-items: center; font-size: 18px; }
+.login-logo-text { font-family: 'Noto Serif KR', serif; font-size: 15px; font-weight: 700; color: var(--text); }
+.login-logo-sub { font-size: 11px; color: var(--text-3); }
+.login-title { font-family: 'Noto Serif KR', serif; font-size: 20px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+.login-desc { font-size: 13px; color: var(--text-3); margin-bottom: 28px; line-height: 1.6; }
+.pw-input-wrap { position: relative; }
+.pw-input-wrap input { width: 100%; border: 1.5px solid var(--border); border-radius: 7px; padding: 11px 40px 11px 13px; font-family: 'Pretendard', sans-serif; font-size: 14px; color: var(--text); background: var(--white); outline: none; transition: border .2s; }
+.pw-input-wrap input:focus { border-color: var(--accent); }
+.pw-toggle { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 15px; background: none; border: none; color: var(--text-3); }
+.login-error { font-size: 12px; color: var(--red); margin-top: 8px; min-height: 18px; }
+.btn-login-submit { width: 100%; margin-top: 20px; padding: 12px; background: var(--accent); color: #fff; border: none; border-radius: 8px; font-family: 'Pretendard', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer; transition: background .15s; }
+.btn-login-submit:hover { background: var(--accent-h); }
+.btn-login-submit:disabled { opacity: .6; cursor: not-allowed; }
+.back-link { display: block; text-align: center; margin-top: 18px; font-size: 12px; color: var(--text-3); text-decoration: none; }
+.back-link:hover { color: var(--accent); }
+.notice-box { background: var(--accent-light); border: 1px solid #b8d0f0; border-radius: 8px; padding: 10px 14px; font-size: 12px; color: var(--accent); margin-bottom: 20px; line-height: 1.6; }
+</style>
+</head>
+<body>
+
+<div class="login-card">
+  <div class="login-logo">
+    <div class="login-logo-icon">📋</div>
+    <div>
+      <div class="login-logo-text">규정관리시스템</div>
+      <div class="login-logo-sub">Regulation Management System</div>
+    </div>
+  </div>
+
+  <div class="login-title">🔒 관리자 로그인</div>
+  <div class="login-desc">Supabase에 등록된 관리자 계정으로 로그인하세요.</div>
+
+  <div class="notice-box" id="noticeBox" style="display:none">
+    ⚠️ Supabase 미연결 상태입니다.<br>
+    <strong>config.js</strong>에 Supabase URL과 키를 입력해주세요.
+  </div>
+
+  <div class="form-row">
+    <label>이메일</label>
+    <input type="email" id="loginEmail" placeholder="admin@example.com"
+      onkeydown="if(event.key==='Enter') document.getElementById('loginPw').focus()">
+  </div>
+  <div class="form-row">
+    <label>비밀번호</label>
+    <div class="pw-input-wrap">
+      <input type="password" id="loginPw" placeholder="비밀번호 입력"
+        onkeydown="if(event.key==='Enter') doLogin()">
+      <button class="pw-toggle" onclick="togglePw()" tabindex="-1">👁</button>
+    </div>
+  </div>
+  <div class="login-error" id="loginError"></div>
+
+  <button class="btn-login-submit" id="loginBtn" onclick="doLogin()">로그인</button>
+  <a class="back-link" href="../index.html">← 홈으로 돌아가기</a>
+</div>
+
+<script src="../js/config.js"></script>
+<script src="../js/auth.js"></script>
+<script>
+// 이미 로그인돼 있으면 홈으로
+(async () => {
+  await Auth.restore();
+  if (Auth.isAdmin) location.href = '../index.html';
+  if (!getSupabase()) document.getElementById('noticeBox').style.display = 'block';
+})();
+
+function getParam(k) { return new URLSearchParams(location.search).get(k); }
+
+function togglePw() {
+  const inp = document.getElementById('loginPw');
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+}
+
+async function doLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const pw    = document.getElementById('loginPw').value;
+  const btn   = document.getElementById('loginBtn');
+  const err   = document.getElementById('loginError');
+
+  err.textContent = '';
+  if (!email || !pw) { err.textContent = '이메일과 비밀번호를 입력해주세요.'; return; }
+
+  btn.textContent = '로그인 중...';
+  btn.disabled = true;
+
+  const result = await Auth.signIn(email, pw);
+
+  if (result.ok) {
+    location.href = getParam('redirect') || '../index.html';
+  } else {
+    err.textContent = '이메일 또는 비밀번호가 올바르지 않습니다.';
+    btn.textContent = '로그인';
+    btn.disabled = false;
+  }
+}
+</script>
+</body>
+</html>
