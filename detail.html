@@ -75,6 +75,10 @@ function renderDetail(reg) {
       › ${reg.title}
     </div>
     <div class="detail-card">
+      <div class="print-header">
+        <h1>${reg.title}</h1>
+        <p>${reg.group}${reg.category ? ' › ' + reg.category : ''} | 시행일: ${reg.date || '미정'} | ${reg.dept || ''}</p>
+      </div>
       <div class="detail-card-hd">
         <div class="detail-cat">${reg.group}${reg.category ? ' › ' + reg.category : ''}</div>
         <div class="detail-ttl">${reg.title}</div>
@@ -109,6 +113,7 @@ function renderDetail(reg) {
         ${Auth.isAdmin ? `<a class="btn-edit" href="edit.html?id=${reg.id}">✏️ 수정</a>` : ''}
         ${canDiff ? `<a class="btn-diff" href="diff.html?id=${reg.id}">📄 신구대조표</a>` : ''}
         ${canDiff ? `<a class="btn-diff" href="timeline.html?id=${reg.id}">🕐 조항연혁</a>` : ''}
+        <button class="btn-pdf" onclick="printPDF()">🖨️ PDF 출력</button>
         ${Auth.isAdmin ? `<button class="btn-del" onclick="openDeleteModal()">🗑️ 삭제</button>` : ''}
       </div>
     </div>`;
@@ -130,6 +135,10 @@ async function confirmDelete() {
     showToast('❌ 삭제 중 오류가 발생했습니다');
   }
   closeModal();
+}
+
+function printPDF() {
+  window.print();
 }
 
 document.querySelector('.modal-backdrop').addEventListener('click', e => {
