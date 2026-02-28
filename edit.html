@@ -54,7 +54,7 @@ function renderForm() {
   document.getElementById('content').innerHTML = `
     <div class="breadcrumb">
       <a class="bc-link" href="index.html">홈</a> ›
-      ${reg ? `<a class="bc-link" href="detail.html?id=${reg.id}">${reg.title}</a> › 수정` : '새 규정 등록'}
+      ${reg ? `<a class="bc-link" href="detail.html?id=${encodeURIComponent(reg.id)}">${escHtml(reg.title)}</a> › 수정` : '새 규정 등록'}
     </div>
     <div class="detail-card">
       <div class="detail-card-hd">
@@ -89,11 +89,11 @@ function renderForm() {
         <div class="f2col">
           <div class="form-row">
             <label>시행일 <span style="font-size:10px;color:var(--text-3);font-weight:400">(규정이 효력을 발생하는 날)</span></label>
-            <input type="date" id="fDate" value="${reg?.date || new Date().toISOString().split('T')[0]}">
+            <input type="date" id="fDate" value="${escHtml(reg?.date || new Date().toISOString().split('T')[0])}">
           </div>
           <div class="form-row">
             <label>개정일 <span style="font-size:10px;color:var(--text-3);font-weight:400">(규정을 개정·공포한 날)</span></label>
-            <input type="date" id="fRevDate" value="${reg?.history?.at(-1)?.revDate || reg?.date || new Date().toISOString().split('T')[0]}">
+            <input type="date" id="fRevDate" value="${escHtml(reg?.history?.at(-1)?.revDate || reg?.date || new Date().toISOString().split('T')[0])}">
           </div>
         </div>
         <div class="form-row">

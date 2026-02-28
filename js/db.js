@@ -1,7 +1,18 @@
 // ── 로컬스토리지 캐시 ──
 const LocalCache = {
   KEY: 'regbook_v4',
-  load() { try { return JSON.parse(localStorage.getItem(this.KEY) || '[]'); } catch { return []; } },
+  load() {
+    try {
+      const raw = JSON.parse(localStorage.getItem(this.KEY) || '[]');
+      if (!Array.isArray(raw)) return [];
+      return raw.filter(r =>
+        r && typeof r === 'object' &&
+        typeof r.id === 'string' &&
+        typeof r.title === 'string' &&
+        Array.isArray(r.history || [])
+      );
+    } catch { return []; }
+  },
   save(data) { localStorage.setItem(this.KEY, JSON.stringify(data)); },
   clear() { localStorage.removeItem(this.KEY); }
 };

@@ -70,23 +70,23 @@ function renderDetail(reg) {
   document.getElementById('content').innerHTML = `
     <div class="breadcrumb">
       <a class="bc-link" href="index.html">홈</a> ›
-      <a class="bc-link" href="list.html?group=${encodeURIComponent(reg.group)}">${reg.group}</a>
-      ${reg.category ? `› <a class="bc-link" href="list.html?group=${encodeURIComponent(reg.group)}&cat=${encodeURIComponent(reg.category)}">${reg.category}</a>` : ''}
-      › ${reg.title}
+      <a class="bc-link" href="list.html?group=${encodeURIComponent(reg.group)}">${escHtml(reg.group)}</a>
+      ${reg.category ? `› <a class="bc-link" href="list.html?group=${encodeURIComponent(reg.group)}&cat=${encodeURIComponent(reg.category)}">${escHtml(reg.category)}</a>` : ''}
+      › ${escHtml(reg.title)}
     </div>
     <div class="detail-card">
       <div class="print-header">
-        <h1>${reg.title}</h1>
-        <p>${reg.group}${reg.category ? ' › ' + reg.category : ''} | 시행일: ${reg.date || '미정'} | ${reg.dept || ''}</p>
+        <h1>${escHtml(reg.title)}</h1>
+        <p>${escHtml(reg.group)}${reg.category ? ' › ' + escHtml(reg.category) : ''} | 시행일: ${escHtml(reg.date || '미정')} | ${escHtml(reg.dept || '')}</p>
       </div>
       <div class="detail-card-hd">
-        <div class="detail-cat">${reg.group}${reg.category ? ' › ' + reg.category : ''}</div>
-        <div class="detail-ttl">${reg.title}</div>
+        <div class="detail-cat">${escHtml(reg.group)}${reg.category ? ' › ' + escHtml(reg.category) : ''}</div>
+        <div class="detail-ttl">${escHtml(reg.title)}</div>
       </div>
       <div class="meta-strip">
         <div class="meta-cell"><div class="meta-k">상태</div><div class="meta-v">${sBadge(reg.status)}</div></div>
-        <div class="meta-cell"><div class="meta-k">시행일</div><div class="meta-v">${reg.date || '미정'}</div></div>
-        <div class="meta-cell"><div class="meta-k">담당부서</div><div class="meta-v">${reg.dept || '—'}</div></div>
+        <div class="meta-cell"><div class="meta-k">시행일</div><div class="meta-v">${escHtml(reg.date || '미정')}</div></div>
+        <div class="meta-cell"><div class="meta-k">담당부서</div><div class="meta-v">${escHtml(reg.dept || '—')}</div></div>
         <div class="meta-cell"><div class="meta-k">개정 횟수</div><div class="meta-v">${reg.history.length}회</div></div>
       </div>
       <div class="detail-body-sec">
@@ -101,19 +101,19 @@ function renderDetail(reg) {
             ${[...reg.history].reverse().map((h, i) => `
               <tr ${i === 0 ? 'class="cur-row"' : ''}>
                 <td style="font-family:'DM Mono',monospace;font-size:12px;white-space:nowrap">
-                  ${h.revDate || h.date || '—'}
+                  ${escHtml(h.revDate || h.date || '—')}
                   ${i === 0 ? '<span style="font-family:Pretendard;font-size:10px;background:var(--accent);color:#fff;padding:1px 6px;border-radius:3px;font-weight:600;margin-left:6px">현행</span>' : ''}
                 </td>
-                <td style="font-family:'DM Mono',monospace;font-size:12px;white-space:nowrap;color:var(--text-3)">${h.date || '—'}</td>
-                <td>${h.note}</td>
+                <td style="font-family:'DM Mono',monospace;font-size:12px;white-space:nowrap;color:var(--text-3)">${escHtml(h.date || '—')}</td>
+                <td>${escHtml(h.note)}</td>
               </tr>`).join('')}
           </tbody>
         </table>
       </div>
       <div class="detail-actions">
-        ${Auth.isAdmin ? `<a class="btn-edit" href="edit.html?id=${reg.id}">✏️ 수정</a>` : ''}
-        ${canDiff ? `<a class="btn-diff" href="diff.html?id=${reg.id}">📄 신구대조표</a>` : ''}
-        ${canDiff ? `<a class="btn-diff" href="timeline.html?id=${reg.id}">🕐 조항연혁</a>` : ''}
+        ${Auth.isAdmin ? `<a class="btn-edit" href="edit.html?id=${encodeURIComponent(reg.id)}">✏️ 수정</a>` : ''}
+        ${canDiff ? `<a class="btn-diff" href="diff.html?id=${encodeURIComponent(reg.id)}">📄 신구대조표</a>` : ''}
+        ${canDiff ? `<a class="btn-diff" href="timeline.html?id=${encodeURIComponent(reg.id)}">🕐 조항연혁</a>` : ''}
         <button class="btn-pdf" onclick="printPDF()">🖨️ PDF 출력</button>
         ${Auth.isAdmin ? `<button class="btn-del" onclick="openDeleteModal()">🗑️ 삭제</button>` : ''}
       </div>
