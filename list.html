@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>규정정보 — 규정관리시스템</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" href="css/common.css">
+</head>
+<body>
+
+<header id="header"></header>
+
+<div id="layout">
+  <nav id="sidebar"></nav>
+  <div id="main">
+    <div id="content">
+      <div class="loading-wrap"><div class="spinner"></div><span>불러오는 중...</span></div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script src="js/config.js"></script>
+<script src="js/sample-data.js"></script>
+<script src="js/db.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/ui.js"></script>
+<script>
+(async () => {
+  const group   = getParam('group');
+  const cat     = getParam('cat');
+  const q       = getParam('q');
+  const type    = getParam('type') || 'title';
+  const recent  = getParam('recent');
+
+  const nav = recent ? 'recent' : 'list';
+  await commonInit(nav, group, cat);
+
+  const regs = _allRegs;
+  let filtered = regs;
+  let label = '전체 규정';
+
+  if (recent) {
+    filtered = [...regs].sort((a, b) =>
+      (b.history.at(-1)?.date || '').localeCompare(a.history.at(-1)?.date || ''));
+    label = '최신 제·개정 규정';
+  } else if (q) {
+    filtered = regs.filter(r => type === 'title' ? r.title.includes(q) : (r.body || '').includes(q));
+    label = `검색: "${q}"`;
+  } else {
+    if (group) filtered = filtered.filter(r => r.group === group);
+    if (cat)   filtered = filtered.filter(r => r.category === cat);
+    label = group ? (cat ? `${group} › ${cat}` : group) : '전체 규정';
+  }
+
+  const isRecent = !!recent;
+
+  document.getElementById('content').innerHTML = `
+    <div class="view-hd">
+      <div class="view-ttl">
+        ${isRecent ? '🆕' : '📂'} ${label}
+        <span class="cat-badge">${filtered.length}건</span>
+      </div>
+      ${Auth.isAdmin ? `<a class="btn-new-reg" href="edit.html">＋ 규정 등록</a>` : ''}
+    </div>
+    ${filtered.length === 0
+      ? '<div class="reg-table"><div class="empty-tbl">등록된 규정이 없습니다</div></div>'
+      : `<div class="reg-table">
+          <table>
+            <thead>
+              <tr>
+                ${isRecent ? '<th style="width:6%">구분</th>' : ''}
+                <th style="width:${isRecent?'32':'38'}%">규정명</th>
+                <th>분류</th>
+                <th style="width:10%">상태</th>
+                <th>시행일</th>
+                <th>관리부서</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${filtered.map(r => {
+                const last = r.history.at(-1);
+                return `<tr onclick="location.href='detail.html?id=${r.id}'" style="cursor:pointer">
+                  ${isRecent ? `<td>${rtypeBadge(r)}</td>` : ''}
+                  <td class="td-ttl">${r.title}</td>
+                  <td style="font-size:12px;color:var(--text-3)">${r.group}${r.category?' › '+r.category:''}</td>
+                  <td>${sBadge(r.status)}</td>
+                  <td style="font-size:12px;color:var(--text-3);font-family:'DM Mono',monospace">${r.date || '—'}</td>
+                  <td style="font-size:12px;color:var(--text-3)">${r.dept || '—'}</td>
+                </tr>`;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>`}`;
+})();
+</script>
+</body>
+</html>

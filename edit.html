@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>규정 편집 — 규정관리시스템</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" href="css/common.css">
+</head>
+<body>
+
+<header id="header"></header>
+
+<div id="layout">
+  <nav id="sidebar"></nav>
+  <div id="main">
+    <div id="content">
+      <div class="loading-wrap"><div class="spinner"></div><span>불러오는 중...</span></div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script src="js/config.js"></script>
+<script src="js/sample-data.js"></script>
+<script src="js/db.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/ui.js"></script>
+<script>
+let editReg = null;
+const isEdit = !!getParam('id');
+
+(async () => {
+  await commonInit(null, null, null);
+
+  // 관리자 아니면 쫓아내기
+  if (!Auth.isAdmin) {
+    showToast('⚠️ 관리자 로그인이 필요합니다');
+    setTimeout(() => location.href = 'admin/index.html', 800);
+    return;
+  }
+
+  if (isEdit) {
+    editReg = await DB.fetchOne(getParam('id'));
+    if (!editReg) { location.href = 'list.html'; return; }
+  }
+
+  renderForm();
+})();
+
+function renderForm() {
+  const reg = editReg;
+  document.getElementById('content').innerHTML = `
+    <div class="breadcrumb">
+      <a class="bc-link" href="index.html">홈</a> ›
+      ${reg ? `<a class="bc-link" href="detail.html?id=${reg.id}">${reg.title}</a> › 수정` : '새 규정 등록'}
+    </div>
+    <div class="detail-card">
+      <div class="detail-card-hd">
+        <div class="detail-ttl">${reg ? '규정 수정' : '새 규정 등록'}</div>
+      </div>
+      <div style="padding:28px;">
+        <div class="form-row">
+          <label>규정명 *</label>
+          <input type="text" id="fTitle" value="${escHtml(reg?.title || '')}" placeholder="예: 임직원 행동강령">
+        </div>
+        <div class="f2col">
+          <div class="form-row">
+            <label>대분류 *</label>
+            <select id="fGroup">
+              <option value="">선택</option>
+              ${GROUPS.map(g => `<option value="${g}" ${reg?.group===g?'selected':''}>${g}</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-row">
+            <label>소분류</label>
+            <input type="text" id="fCategory" value="${escHtml(reg?.category || '')}" placeholder="예: 교원인사">
+          </div>
+        </div>
+        <div class="f2col">
+          <div class="form-row">
+            <label>상태</label>
+            <select id="fStatus">
+              <option value="active" ${reg?.status==='active'?'selected':''}>시행중</option>
+              <option value="draft" ${reg?.status==='draft'?'selected':''}>초안</option>
+              <option value="obsolete" ${reg?.status==='obsolete'?'selected':''}>폐기</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <label>버전</label>
+            <input type="text" id="fVersion" value="${escHtml(reg?.version || 'v1.0')}" placeholder="예: v1.0">
+          </div>
+        </div>
+        <div class="f2col">
+          <div class="form-row">
+            <label>시행일</label>
+            <input type="date" id="fDate" value="${reg?.date || new Date().toISOString().split('T')[0]}">
+          </div>
+          <div class="form-row">
+            <label>담당부서</label>
+            <input type="text" id="fDept" value="${escHtml(reg?.dept || '')}" placeholder="예: 총무팀">
+          </div>
+        </div>
+        <div class="form-row">
+          <label>규정 내용 *</label>
+          <textarea id="fBody" style="height:220px" placeholder="규정의 상세 내용을 입력하세요...">${escHtml(reg?.body || '')}</textarea>
+        </div>
+        ${reg ? `
+        <div class="form-row">
+          <label>개정 사유</label>
+          <input type="text" id="fRevNote" placeholder="이번 개정의 주요 변경 내용">
+        </div>` : ''}
+        <div style="display:flex;gap:10px;margin-top:8px;">
+          <button class="btn-primary" onclick="saveReg()">💾 저장</button>
+          <button class="btn-secondary" onclick="history.back()">취소</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+async function saveReg() {
+  const title   = document.getElementById('fTitle').value.trim();
+  const group   = document.getElementById('fGroup').value;
+  const cat     = document.getElementById('fCategory').value.trim();
+  const status  = document.getElementById('fStatus').value;
+  const version = document.getElementById('fVersion').value.trim();
+  const date    = document.getElementById('fDate').value;
+  const dept    = document.getElementById('fDept').value.trim();
+  const body    = document.getElementById('fBody').value.trim();
+  const revNote = document.getElementById('fRevNote')?.value.trim() || '';
+
+  if (!title || !group || !body) { showToast('⚠️ 필수 항목을 모두 입력해주세요'); return; }
+
+  let reg;
+  if (!isEdit) {
+    reg = {
+      id: 'r' + Date.now(), title, group, category: cat, status, version, date, dept, body,
+      history: [{ version, date: date || new Date().toISOString().split('T')[0], note: '최초 제정', body }]
+    };
+  } else {
+    const changed = editReg.body !== body || editReg.version !== version;
+    reg = { ...editReg, title, group, category: cat, status, version, date, dept, body };
+    if (changed) {
+      reg.history = [...editReg.history, {
+        version, date: new Date().toISOString().split('T')[0],
+        note: revNote || '내용 수정', body
+      }];
+    }
+  }
+
+  const btn = document.querySelector('.btn-primary');
+  btn.textContent = '저장 중...'; btn.disabled = true;
+
+  const ok = await DB.upsert(reg);
+  if (ok) {
+    showToast('✅ 저장되었습니다');
+    setTimeout(() => location.href = `detail.html?id=${reg.id}`, 600);
+  } else {
+    showToast('❌ 저장 중 오류가 발생했습니다');
+    btn.textContent = '💾 저장'; btn.disabled = false;
+  }
+}
+</script>
+</body>
+</html>

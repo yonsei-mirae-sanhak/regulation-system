@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>조항연혁 — 규정관리시스템</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" href="css/common.css">
+</head>
+<body>
+
+<header id="header"></header>
+
+<div id="layout">
+  <nav id="sidebar"></nav>
+  <div id="main">
+    <div id="content">
+      <div class="loading-wrap"><div class="spinner"></div><span>불러오는 중...</span></div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script src="js/config.js"></script>
+<script src="js/sample-data.js"></script>
+<script src="js/db.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/diff-engine.js"></script>
+<script>
+let reg = null;
+
+(async () => {
+  const id = getParam('id');
+  if (!id) { location.href = 'index.html'; return; }
+
+  await commonInit(null, null, null);
+  reg = await DB.fetchOne(id);
+  if (!reg || reg.history.length < 2) {
+    document.getElementById('content').innerHTML = '<div class="empty-tbl">비교할 개정 이력이 없습니다.</div>';
+    return;
+  }
+
+  const allDates = reg.history.map(h => h.date || '').filter(Boolean).sort();
+  renderTimeline(allDates[0], allDates.at(-1));
+})();
+
+function renderTimeline(fromDate, toDate) {
+  const filtered = reg.history.filter(h => {
+    const d = h.date || '9999';
+    return d >= fromDate && d <= toDate;
+  });
+
+  const dateOpts = (sel) => reg.history.map((h, i) =>
+    `<option value="${h.date||''}" ${h.date===sel?'selected':''}>${h.date||'날짜없음'} (${i===0?'제정':'개정'})</option>`
+  ).join('');
+
+  const allArticles = collectAllArticles(filtered.map(h => h.body || ''));
+
+  const headers = filtered.map((h, i) => {
+    const isFirst = reg.history.indexOf(h) === 0;
+    const tag = isFirst ? 'th-tag-new' : 'th-tag-rev';
+    return `<th>${reg.title} ${h.date||''} <span class="th-tag ${tag}">${isFirst?'제정':'개정'}</span></th>`;
+  }).join('');
+
+  const rows = allArticles.map((artKey, rowIdx) => {
+    const cells = filtered.map((h, colIdx) => {
+      const arts = splitIntoArticles(h.body || '');
+      const match = arts.find(a => extractArticleKey(a) === artKey);
+
+      let tdClass = '';
+      if (!match) {
+        return `<td class="td-empty">—</td>`;
+      } else if (colIdx > 0) {
+        const prevArts = splitIntoArticles(filtered[colIdx-1].body || '');
+        const prev = prevArts.find(a => extractArticleKey(a) === artKey);
+        if (!prev) tdClass = 'td-added';
+        else if (prev !== match) tdClass = 'td-changed';
+      }
+
+      const lines = match.split('\n');
+      return `<td class="${tdClass}">
+        <span class="tl-art-title">${escHtml(lines[0])}</span>${escHtml(lines.slice(1).join('\n'))}
+      </td>`;
+    }).join('');
+
+    return `<tr><td class="row-label">제${rowIdx+1}조</td>${cells}</tr>`;
+  }).join('');
+
+  document.getElementById('content').innerHTML = `
+    <div class="breadcrumb">
+      <a class="bc-link" href="index.html">홈</a> ›
+      <a class="bc-link" href="list.html?group=${encodeURIComponent(reg.group)}">${reg.group}</a> ›
+      <a class="bc-link" href="detail.html?id=${reg.id}">${reg.title}</a> › 조항연혁
+    </div>
+    <div class="timeline-page">
+      <div class="timeline-top">
+        <div class="timeline-top-title">🕐 조항연혁 보기</div>
+        <div class="timeline-top-sub">${reg.title} — 버전별 조항 변경 이력</div>
+      </div>
+      <div class="timeline-controls">
+        <label>연혁</label>
+        <select class="tl-date-select" id="tlFrom">${dateOpts(fromDate)}</select>
+        <span style="color:var(--text-3)">~</span>
+        <select class="tl-date-select" id="tlTo">${dateOpts(toDate)}</select>
+        <button class="btn-tl-apply" onclick="applyTimeline()">보기</button>
+        <span style="font-size:11px;color:var(--text-3);margin-left:8px">
+          🟡 변경된 조항&nbsp;&nbsp;🟢 신설 조항&nbsp;&nbsp;— 해당없음
+        </span>
+      </div>
+      <div class="timeline-scroll-wrap">
+        <table class="timeline-table">
+          <thead>
+            <tr>
+              <th style="position:sticky;left:0;z-index:20;background:#dce4f0;width:80px;min-width:80px;">조항</th>
+              ${headers}
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    </div>`;
+}
+
+function applyTimeline() {
+  const from = document.getElementById('tlFrom').value;
+  const to   = document.getElementById('tlTo').value;
+  renderTimeline(from, to);
+}
+</script>
+</body>
+</html>

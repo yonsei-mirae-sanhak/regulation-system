@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>규정관리시스템</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" href="css/common.css">
+</head>
+<body>
+
+<header id="header"></header>
+
+<div id="layout">
+  <nav id="sidebar"></nav>
+  <div id="main">
+    <div id="content">
+      <div class="loading-wrap"><div class="spinner"></div><span>불러오는 중...</span></div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script src="js/config.js"></script>
+<script src="js/sample-data.js"></script>
+<script src="js/db.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/ui.js"></script>
+<script>
+(async () => {
+  await commonInit('home', null, null);
+
+  const regs = _allRegs;
+  const recent = [...regs]
+    .sort((a, b) => (b.history.at(-1)?.date || '').localeCompare(a.history.at(-1)?.date || ''))
+    .slice(0, 10);
+
+  document.getElementById('content').innerHTML = `
+    <div class="home-search-bar">
+      <h2>🔍 규정 통합검색</h2>
+      <div class="search-row">
+        <select class="search-type" id="hsType">
+          <option value="title">규정명</option>
+          <option value="body">규정내용</option>
+        </select>
+        <input class="search-inp" type="text" id="hsInput" placeholder="검색어를 입력하세요"
+          onkeydown="if(event.key==='Enter') doSearch()">
+        <button class="btn-srch" onclick="doSearch()">검색</button>
+      </div>
+    </div>
+    <div class="view-hd" style="margin-bottom:14px">
+      <div class="view-ttl" style="font-size:16px">🆕 최신 제·개정 규정</div>
+      <a href="list.html?recent=1" style="font-size:12px;color:var(--accent);text-decoration:none;">전체보기 →</a>
+    </div>
+    <div class="reg-table">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:6%">구분</th>
+            <th style="width:36%">규정명</th>
+            <th>분류</th>
+            <th>시행일</th>
+            <th>관리부서</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${recent.map(r => {
+            const last = r.history.at(-1);
+            return `<tr onclick="location.href='detail.html?id=${r.id}'" style="cursor:pointer">
+              <td>${rtypeBadge(r)}</td>
+              <td class="td-ttl">${r.title}</td>
+              <td style="font-size:12px;color:var(--text-3)">${r.group}${r.category ? ' › ' + r.category : ''}</td>
+              <td style="font-size:12px;color:var(--text-3);font-family:'DM Mono',monospace">${last?.date || '—'}</td>
+              <td style="font-size:12px;color:var(--text-2)">${r.dept || '—'}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>`;
+})();
+
+function doSearch() {
+  const q = document.getElementById('hsInput').value.trim();
+  const type = document.getElementById('hsType').value;
+  if (!q) return;
+  location.href = url(`list.html?q=${encodeURIComponent(q)}&type=${type}`);
+}
+</script>
+</body>
+</html>

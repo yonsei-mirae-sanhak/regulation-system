@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>신구대조표 — 규정관리시스템</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" href="css/common.css">
+</head>
+<body>
+
+<header id="header"></header>
+
+<div id="layout">
+  <nav id="sidebar"></nav>
+  <div id="main">
+    <div id="content">
+      <div class="loading-wrap"><div class="spinner"></div><span>불러오는 중...</span></div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script src="js/config.js"></script>
+<script src="js/sample-data.js"></script>
+<script src="js/db.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/diff-engine.js"></script>
+<script>
+let reg = null;
+
+(async () => {
+  const id = getParam('id');
+  if (!id) { location.href = 'index.html'; return; }
+
+  await commonInit(null, null, null);
+  reg = await DB.fetchOne(id);
+  if (!reg || reg.history.length < 2) {
+    document.getElementById('content').innerHTML = '<div class="empty-tbl">비교할 개정 이력이 없습니다.</div>';
+    return;
+  }
+
+  const oi = parseInt(getParam('old') ?? reg.history.length - 2);
+  const ni = parseInt(getParam('new') ?? reg.history.length - 1);
+  renderDiffPage(oi, ni);
+})();
+
+function renderDiffPage(oi, ni) {
+  const h = reg.history;
+  const oldH = h[oi], newH = h[ni];
+  const diffRows = computeDiff(oldH.body || '', newH.body || '');
+
+  const verOpts = (sel) => h.map((v, i) =>
+    `<option value="${i}" ${i===sel?'selected':''}>${v.date||'날짜없음'} (${i===0?'제정':'개정'})</option>`
+  ).join('');
+
+  document.getElementById('content').innerHTML = `
+    <div class="breadcrumb">
+      <a class="bc-link" href="index.html">홈</a> ›
+      <a class="bc-link" href="list.html?group=${encodeURIComponent(reg.group)}">${reg.group}</a> ›
+      <a class="bc-link" href="detail.html?id=${reg.id}">${reg.title}</a> › 신구대조표
+    </div>
+    <div class="diff-page">
+      <div class="diff-header">
+        <div class="diff-title">📄 신구조문 대조표</div>
+        <div class="diff-subtitle">${reg.title}</div>
+      </div>
+      <div class="diff-ver-selector">
+        <label>현행(구)</label>
+        <select class="diff-ver-select" id="diffOld">${verOpts(oi)}</select>
+        <span class="diff-arrow">→</span>
+        <label>개정(신)</label>
+        <select class="diff-ver-select" id="diffNew">${verOpts(ni)}</select>
+        <button class="btn-diff-apply" onclick="applyDiff()">대조 보기</button>
+      </div>
+      <div class="diff-legend">
+        <span style="font-size:12px;font-weight:600;color:var(--text-2);margin-right:8px">범례</span>
+        <div class="legend-item"><div class="legend-box legend-del"></div><span>삭제·변경(구)</span></div>
+        <div class="legend-item"><div class="legend-box legend-add"></div><span>추가·변경(신)</span></div>
+        <div class="legend-item"><div class="legend-box legend-same"></div><span>동일</span></div>
+      </div>
+      <div class="diff-col-header">
+        <div class="diff-col-hd old">현 행 (${oldH.date || '—'})</div>
+        <div class="diff-col-hd new">개 정 (${newH.date || '—'})</div>
+      </div>
+      <div class="diff-body">${renderDiffRows(diffRows)}</div>
+    </div>`;
+}
+
+function applyDiff() {
+  const oi = parseInt(document.getElementById('diffOld').value);
+  const ni = parseInt(document.getElementById('diffNew').value);
+  if (oi === ni) { showToast('⚠️ 서로 다른 버전을 선택해주세요'); return; }
+  renderDiffPage(oi, ni);
+}
+</script>
+</body>
+</html>

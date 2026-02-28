@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>규정 상세 — 규정관리시스템</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" href="css/common.css">
+</head>
+<body>
+
+<header id="header"></header>
+
+<div id="layout">
+  <nav id="sidebar"></nav>
+  <div id="main">
+    <div id="content">
+      <div class="loading-wrap"><div class="spinner"></div><span>불러오는 중...</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- 삭제 확인 모달 -->
+<div class="modal-backdrop" id="deleteModal">
+  <div class="modal sm">
+    <div class="modal-hd">
+      <div class="modal-ttl">규정 삭제</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="warn-box">⚠️ 삭제하면 모든 개정 이력이 함께 삭제되며, 복구할 수 없습니다.</div>
+      <p style="font-size:14px;color:var(--text-2)"><strong id="deleteTargetName"></strong> 규정을 삭제하시겠습니까?</p>
+    </div>
+    <div class="modal-ft">
+      <button class="btn-secondary" onclick="closeModal()">취소</button>
+      <button class="btn-danger" onclick="confirmDelete()">삭제</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script src="js/config.js"></script>
+<script src="js/sample-data.js"></script>
+<script src="js/db.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/ui.js"></script>
+<script>
+let currentReg = null;
+
+(async () => {
+  const id = getParam('id');
+  if (!id) { location.href = 'index.html'; return; }
+
+  await commonInit(null, null, null);
+
+  // DB에서 단건 조회
+  currentReg = await DB.fetchOne(id);
+  if (!currentReg) {
+    document.getElementById('content').innerHTML = '<div class="empty-tbl">규정을 찾을 수 없습니다.</div>';
+    return;
+  }
+
+  renderDetail(currentReg);
+})();
+
+function renderDetail(reg) {
+  const canDiff = reg.history.length >= 2;
+
+  document.getElementById('content').innerHTML = `
+    <div class="breadcrumb">
+      <a class="bc-link" href="index.html">홈</a> ›
+      <a class="bc-link" href="list.html?group=${encodeURIComponent(reg.group)}">${reg.group}</a>
+      ${reg.category ? `› <a class="bc-link" href="list.html?group=${encodeURIComponent(reg.group)}&cat=${encodeURIComponent(reg.category)}">${reg.category}</a>` : ''}
+      › ${reg.title}
+    </div>
+    <div class="detail-card">
+      <div class="detail-card-hd">
+        <div class="detail-cat">${reg.group}${reg.category ? ' › ' + reg.category : ''}</div>
+        <div class="detail-ttl">${reg.title}</div>
+      </div>
+      <div class="meta-strip">
+        <div class="meta-cell"><div class="meta-k">상태</div><div class="meta-v">${sBadge(reg.status)}</div></div>
+        <div class="meta-cell"><div class="meta-k">시행일</div><div class="meta-v">${reg.date || '미정'}</div></div>
+        <div class="meta-cell"><div class="meta-k">담당부서</div><div class="meta-v">${reg.dept || '—'}</div></div>
+        <div class="meta-cell"><div class="meta-k">개정 횟수</div><div class="meta-v">${reg.history.length}회</div></div>
+      </div>
+      <div class="detail-body-sec">
+        <div class="sec-ttl">규정 내용</div>
+        <div class="detail-body-txt">${escHtml(reg.body)}</div>
+      </div>
+      <div class="detail-body-sec" style="padding-top:0">
+        <div class="sec-ttl">개정 이력</div>
+        <table class="history-tbl">
+          <thead><tr><th>시행일</th><th>개정 내용</th></tr></thead>
+          <tbody>
+            ${[...reg.history].reverse().map((h, i) => `
+              <tr ${i === 0 ? 'class="cur-row"' : ''}>
+                <td style="font-family:'DM Mono',monospace;font-size:12px;white-space:nowrap">
+                  ${h.date || '—'}
+                  ${i === 0 ? '<span style="font-family:Pretendard;font-size:10px;background:var(--accent);color:#fff;padding:1px 6px;border-radius:3px;font-weight:600;margin-left:6px">현행</span>' : ''}
+                </td>
+                <td>${h.note}</td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+      <div class="detail-actions">
+        ${Auth.isAdmin ? `<a class="btn-edit" href="edit.html?id=${reg.id}">✏️ 수정</a>` : ''}
+        ${canDiff ? `<a class="btn-diff" href="diff.html?id=${reg.id}">📄 신구대조표</a>` : ''}
+        ${canDiff ? `<a class="btn-diff" href="timeline.html?id=${reg.id}">🕐 조항연혁</a>` : ''}
+        ${Auth.isAdmin ? `<button class="btn-del" onclick="openDeleteModal()">🗑️ 삭제</button>` : ''}
+      </div>
+    </div>`;
+}
+
+function openDeleteModal() {
+  document.getElementById('deleteTargetName').textContent = currentReg.title;
+  document.getElementById('deleteModal').classList.add('open');
+}
+function closeModal() {
+  document.getElementById('deleteModal').classList.remove('open');
+}
+async function confirmDelete() {
+  const ok = await DB.remove(currentReg.id);
+  if (ok) {
+    showToast('🗑️ 삭제되었습니다');
+    setTimeout(() => location.href = 'list.html', 800);
+  } else {
+    showToast('❌ 삭제 중 오류가 발생했습니다');
+  }
+  closeModal();
+}
+
+document.querySelector('.modal-backdrop').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeModal();
+});
+</script>
+</body>
+</html>
