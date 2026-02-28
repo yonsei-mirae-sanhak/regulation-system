@@ -96,14 +96,15 @@ function renderDetail(reg) {
       <div class="detail-body-sec" style="padding-top:0">
         <div class="sec-ttl">개정 이력</div>
         <table class="history-tbl">
-          <thead><tr><th>시행일</th><th>개정 내용</th></tr></thead>
+          <thead><tr><th>개정일</th><th>시행일</th><th>개정 내용</th></tr></thead>
           <tbody>
             ${[...reg.history].reverse().map((h, i) => `
               <tr ${i === 0 ? 'class="cur-row"' : ''}>
                 <td style="font-family:'DM Mono',monospace;font-size:12px;white-space:nowrap">
-                  ${h.date || '—'}
+                  ${h.revDate || h.date || '—'}
                   ${i === 0 ? '<span style="font-family:Pretendard;font-size:10px;background:var(--accent);color:#fff;padding:1px 6px;border-radius:3px;font-weight:600;margin-left:6px">현행</span>' : ''}
                 </td>
+                <td style="font-family:'DM Mono',monospace;font-size:12px;white-space:nowrap;color:var(--text-3)">${h.date || '—'}</td>
                 <td>${h.note}</td>
               </tr>`).join('')}
           </tbody>

@@ -78,29 +78,27 @@ function renderForm() {
             <input type="text" id="fCategory" value="${escHtml(reg?.category || '')}" placeholder="예: 교원인사">
           </div>
         </div>
-        <div class="f2col">
-          <div class="form-row">
-            <label>상태</label>
-            <select id="fStatus">
-              <option value="active" ${reg?.status==='active'?'selected':''}>시행중</option>
-              <option value="draft" ${reg?.status==='draft'?'selected':''}>초안</option>
-              <option value="obsolete" ${reg?.status==='obsolete'?'selected':''}>폐기</option>
-            </select>
-          </div>
-          <div class="form-row">
-            <label>버전</label>
-            <input type="text" id="fVersion" value="${escHtml(reg?.version || 'v1.0')}" placeholder="예: v1.0">
-          </div>
+        <div class="form-row">
+          <label>상태</label>
+          <select id="fStatus">
+            <option value="active" ${reg?.status==='active'?'selected':''}>시행중</option>
+            <option value="draft" ${reg?.status==='draft'?'selected':''}>초안</option>
+            <option value="obsolete" ${reg?.status==='obsolete'?'selected':''}>폐기</option>
+          </select>
         </div>
         <div class="f2col">
           <div class="form-row">
-            <label>시행일</label>
+            <label>시행일 <span style="font-size:10px;color:var(--text-3);font-weight:400">(규정이 효력을 발생하는 날)</span></label>
             <input type="date" id="fDate" value="${reg?.date || new Date().toISOString().split('T')[0]}">
           </div>
           <div class="form-row">
-            <label>담당부서</label>
-            <input type="text" id="fDept" value="${escHtml(reg?.dept || '')}" placeholder="예: 총무팀">
+            <label>개정일 <span style="font-size:10px;color:var(--text-3);font-weight:400">(규정을 개정·공포한 날)</span></label>
+            <input type="date" id="fRevDate" value="${reg?.history?.at(-1)?.revDate || reg?.date || new Date().toISOString().split('T')[0]}">
           </div>
+        </div>
+        <div class="form-row">
+          <label>담당부서</label>
+          <input type="text" id="fDept" value="${escHtml(reg?.dept || '')}" placeholder="예: 총무팀">
         </div>
         <div class="form-row">
           <label>규정 내용 *</label>
@@ -124,28 +122,32 @@ async function saveReg() {
   const group   = document.getElementById('fGroup').value;
   const cat     = document.getElementById('fCategory').value.trim();
   const status  = document.getElementById('fStatus').value;
-  const version = document.getElementById('fVersion').value.trim();
   const date    = document.getElementById('fDate').value;
+  const revDate = document.getElementById('fRevDate').value;
   const dept    = document.getElementById('fDept').value.trim();
   const body    = document.getElementById('fBody').value.trim();
   const revNote = document.getElementById('fRevNote')?.value.trim() || '';
 
   if (!title || !group || !body) { showToast('⚠️ 필수 항목을 모두 입력해주세요'); return; }
 
+  const today = new Date().toISOString().split('T')[0];
   let reg;
   if (!isEdit) {
     reg = {
-      id: 'r' + Date.now(), title, group, category: cat, status, version, date, dept, body,
-      history: [{ version, date: date || new Date().toISOString().split('T')[0], note: '최초 제정', body }]
+      id: 'r' + Date.now(), title, group, category: cat, status,
+      version: 'v1.0', date, dept, body,
+      history: [{ revDate: revDate || today, date: date, note: '최초 제정', body }]
     };
   } else {
-    const changed = editReg.body !== body || editReg.version !== version;
-    reg = { ...editReg, title, group, category: cat, status, version, date, dept, body };
+    const changed = editReg.body !== body;
+    reg = { ...editReg, title, group, category: cat, status, date, dept, body };
     if (changed) {
       reg.history = [...editReg.history, {
-        version, date: new Date().toISOString().split('T')[0],
+        revDate: revDate || today, date,
         note: revNote || '내용 수정', body
       }];
+    } else {
+      // 내용 변경 없어도 기타 정보는 업데이트
     }
   }
 
