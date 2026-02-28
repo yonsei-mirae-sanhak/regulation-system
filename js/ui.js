@@ -12,6 +12,9 @@ function renderHeader(activeNav) {
   const el = document.getElementById('header');
   if (!el) return;
   el.innerHTML = `
+    <button class="hamburger" id="hamburgerBtn" onclick="toggleSidebar()" aria-label="메뉴">
+      <span></span><span></span><span></span>
+    </button>
     <a class="header-logo" href="${url('index.html')}">
       <div class="logo-icon">📋</div>
       <div>
@@ -25,6 +28,15 @@ function renderHeader(activeNav) {
       <a href="${url('list.html?recent=1')}" ${activeNav==='recent'?'class="active"':''}>최신 제·개정</a>
     </nav>
     <div class="header-right" id="headerRight"></div>`;
+
+  // 사이드바 오버레이 생성
+  if (!document.getElementById('sidebarOverlay')) {
+    const overlay = document.createElement('div');
+    overlay.className = 'sidebar-overlay';
+    overlay.id = 'sidebarOverlay';
+    overlay.onclick = closeSidebar;
+    document.body.appendChild(overlay);
+  }
   updateAdminUI();
 }
 
@@ -177,4 +189,28 @@ async function commonInit(activeNav, activeGroup, activeCat) {
     }
   }
   await renderSidebar(activeGroup, activeCat);
+}
+
+// ── 사이드바 토글 (모바일) ──
+function toggleSidebar() {
+  const sb = document.getElementById('sidebar');
+  const btn = document.getElementById('hamburgerBtn');
+  const overlay = document.getElementById('sidebarOverlay');
+  const isOpen = sb && sb.classList.contains('open');
+  if (isOpen) { closeSidebar(); } else {
+    sb && sb.classList.add('open');
+    btn && btn.classList.add('open');
+    overlay && overlay.classList.add('show');
+    document.body.style.overflow = 'hidden';
+  }
+}
+
+function closeSidebar() {
+  const sb = document.getElementById('sidebar');
+  const btn = document.getElementById('hamburgerBtn');
+  const overlay = document.getElementById('sidebarOverlay');
+  sb && sb.classList.remove('open');
+  btn && btn.classList.remove('open');
+  overlay && overlay.classList.remove('show');
+  document.body.style.overflow = '';
 }
