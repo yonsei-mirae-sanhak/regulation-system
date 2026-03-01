@@ -1,3 +1,5 @@
+const GROUPS = ['학사', '인사', '재무', 'IT보안'];
+
 const SAMPLE_DATA = [
   {
     id: 'r1', title: '학사규정', group: '학사', category: '학사일반',

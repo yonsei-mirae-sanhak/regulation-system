@@ -1,0 +1,10 @@
+# Environment variable files — never commit actual secrets
+.env
+.env.local
+.env.production
+.env.*
+
+# OS / editor artifacts
+.DS_Store
+Thumbs.db
+*.swp

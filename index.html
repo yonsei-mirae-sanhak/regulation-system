@@ -67,12 +67,12 @@
         <tbody>
           ${recent.map(r => {
             const last = r.history.at(-1);
-            return `<tr onclick="location.href='detail.html?id=${r.id}'" style="cursor:pointer">
+            return `<tr onclick="location.href='detail.html?id=${encodeURIComponent(r.id)}'" style="cursor:pointer">
               <td>${rtypeBadge(r)}</td>
-              <td class="td-ttl">${r.title}</td>
-              <td style="font-size:12px;color:var(--text-3)">${r.group}${r.category ? ' › ' + r.category : ''}</td>
-              <td style="font-size:12px;color:var(--text-3);font-family:'DM Mono',monospace">${last?.date || '—'}</td>
-              <td style="font-size:12px;color:var(--text-2)">${r.dept || '—'}</td>
+              <td class="td-ttl">${escHtml(r.title)}</td>
+              <td style="font-size:12px;color:var(--text-3)">${escHtml(r.group)}${r.category ? ' › ' + escHtml(r.category) : ''}</td>
+              <td style="font-size:12px;color:var(--text-3);font-family:'DM Mono',monospace">${escHtml(last?.date || '—')}</td>
+              <td style="font-size:12px;color:var(--text-2)">${escHtml(r.dept || '—')}</td>
             </tr>`;
           }).join('')}
         </tbody>

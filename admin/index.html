@@ -84,10 +84,23 @@ body { display: flex; align-items: center; justify-content: center; min-height: 
 
 function getParam(k) { return new URLSearchParams(location.search).get(k); }
 
+function getSafeRedirect() {
+  const redirect = getParam('redirect');
+  if (!redirect) return '../index.html';
+  // Only allow relative paths within the same origin to prevent open redirect
+  try {
+    const resolved = new URL(redirect, location.href);
+    if (resolved.origin !== location.origin) return '../index.html';
+    return redirect;
+  } catch { return '../index.html'; }
+}
+
 function togglePw() {
   const inp = document.getElementById('loginPw');
   inp.type = inp.type === 'password' ? 'text' : 'password';
 }
+
+let _loginFailCount = 0;
 
 async function doLogin() {
   const email = document.getElementById('loginEmail').value.trim();
@@ -98,17 +111,32 @@ async function doLogin() {
   err.textContent = '';
   if (!email || !pw) { err.textContent = '이메일과 비밀번호를 입력해주세요.'; return; }
 
+  // Validate email format
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailPattern.test(email)) { err.textContent = '올바른 이메일 형식을 입력해주세요.'; return; }
+
   btn.textContent = '로그인 중...';
   btn.disabled = true;
 
   const result = await Auth.signIn(email, pw);
 
   if (result.ok) {
-    location.href = getParam('redirect') || '../index.html';
+    _loginFailCount = 0;
+    location.href = getSafeRedirect();
   } else {
+    _loginFailCount++;
+    const lockSec = _loginFailCount >= 5 ? 30 : _loginFailCount >= 3 ? 10 : 0;
     err.textContent = '이메일 또는 비밀번호가 올바르지 않습니다.';
-    btn.textContent = '로그인';
-    btn.disabled = false;
+    if (lockSec > 0) {
+      err.textContent += ` (${lockSec}초 후 재시도 가능)`;
+      setTimeout(() => {
+        btn.textContent = '로그인';
+        btn.disabled = false;
+      }, lockSec * 1000);
+    } else {
+      btn.textContent = '로그인';
+      btn.disabled = false;
+    }
   }
 }
 </script>

@@ -53,19 +53,19 @@ function renderDiffPage(oi, ni) {
   const diffRows = computeDiff(oldH.body || '', newH.body || '');
 
   const verOpts = (sel) => h.map((v, i) =>
-    `<option value="${i}" ${i===sel?'selected':''}>${v.date||'날짜없음'} (${i===0?'제정':'개정'})</option>`
+    `<option value="${i}" ${i===sel?'selected':''}>${escHtml(v.date||'날짜없음')} (${i===0?'제정':'개정'})</option>`
   ).join('');
 
   document.getElementById('content').innerHTML = `
     <div class="breadcrumb">
       <a class="bc-link" href="index.html">홈</a> ›
-      <a class="bc-link" href="list.html?group=${encodeURIComponent(reg.group)}">${reg.group}</a> ›
-      <a class="bc-link" href="detail.html?id=${reg.id}">${reg.title}</a> › 신구대조표
+      <a class="bc-link" href="list.html?group=${encodeURIComponent(reg.group)}">${escHtml(reg.group)}</a> ›
+      <a class="bc-link" href="detail.html?id=${encodeURIComponent(reg.id)}">${escHtml(reg.title)}</a> › 신구대조표
     </div>
     <div class="diff-page">
       <div class="diff-header">
         <div class="diff-title">📄 신구조문 대조표</div>
-        <div class="diff-subtitle">${reg.title}</div>
+        <div class="diff-subtitle">${escHtml(reg.title)}</div>
       </div>
       <div class="diff-ver-selector">
         <label>현행(구)</label>
@@ -82,8 +82,8 @@ function renderDiffPage(oi, ni) {
         <div class="legend-item"><div class="legend-box legend-same"></div><span>동일</span></div>
       </div>
       <div class="diff-col-header">
-        <div class="diff-col-hd old">현 행 (${oldH.date || '—'})</div>
-        <div class="diff-col-hd new">개 정 (${newH.date || '—'})</div>
+        <div class="diff-col-hd old">현 행 (${escHtml(oldH.date || '—')})</div>
+        <div class="diff-col-hd new">개 정 (${escHtml(newH.date || '—')})</div>
       </div>
       <div class="diff-body">${renderDiffRows(diffRows)}</div>
     </div>`;
@@ -92,6 +92,10 @@ function renderDiffPage(oi, ni) {
 function applyDiff() {
   const oi = parseInt(document.getElementById('diffOld').value);
   const ni = parseInt(document.getElementById('diffNew').value);
+  const maxIdx = reg.history.length - 1;
+  if (isNaN(oi) || isNaN(ni) || oi < 0 || ni < 0 || oi > maxIdx || ni > maxIdx) {
+    showToast('⚠️ 유효하지 않은 버전입니다'); return;
+  }
   if (oi === ni) { showToast('⚠️ 서로 다른 버전을 선택해주세요'); return; }
   renderDiffPage(oi, ni);
 }

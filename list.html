@@ -48,11 +48,11 @@
     label = '최신 제·개정 규정';
   } else if (q) {
     filtered = regs.filter(r => type === 'title' ? r.title.includes(q) : (r.body || '').includes(q));
-    label = `검색: "${q}"`;
+    label = `검색: "${escHtml(q)}"`;
   } else {
     if (group) filtered = filtered.filter(r => r.group === group);
     if (cat)   filtered = filtered.filter(r => r.category === cat);
-    label = group ? (cat ? `${group} › ${cat}` : group) : '전체 규정';
+    label = group ? (cat ? `${escHtml(group)} › ${escHtml(cat)}` : escHtml(group)) : '전체 규정';
   }
 
   const isRecent = !!recent;
@@ -82,13 +82,13 @@
             <tbody>
               ${filtered.map(r => {
                 const last = r.history.at(-1);
-                return `<tr onclick="location.href='detail.html?id=${r.id}'" style="cursor:pointer">
+                return `<tr onclick="location.href='detail.html?id=${encodeURIComponent(r.id)}'" style="cursor:pointer">
                   ${isRecent ? `<td>${rtypeBadge(r)}</td>` : ''}
-                  <td class="td-ttl">${r.title}</td>
-                  <td style="font-size:12px;color:var(--text-3)">${r.group}${r.category?' › '+r.category:''}</td>
+                  <td class="td-ttl">${escHtml(r.title)}</td>
+                  <td style="font-size:12px;color:var(--text-3)">${escHtml(r.group)}${r.category?' › '+escHtml(r.category):''}</td>
                   <td>${sBadge(r.status)}</td>
-                  <td style="font-size:12px;color:var(--text-3);font-family:'DM Mono',monospace">${r.date || '—'}</td>
-                  <td style="font-size:12px;color:var(--text-3)">${r.dept || '—'}</td>
+                  <td style="font-size:12px;color:var(--text-3);font-family:'DM Mono',monospace">${escHtml(r.date || '—')}</td>
+                  <td style="font-size:12px;color:var(--text-3)">${escHtml(r.dept || '—')}</td>
                 </tr>`;
               }).join('')}
             </tbody>
