@@ -70,7 +70,7 @@ function renderForm() {
             <label>대분류 *</label>
             <select id="fGroup">
               <option value="">선택</option>
-              ${GROUPS.map(g => `<option value="${g}" ${reg?.group===g?'selected':''}>${g}</option>`).join('')}
+              ${GROUPS.map(g => `<option value="${escHtml(g)}" ${reg?.group===g?'selected':''}>${escHtml(g)}</option>`).join('')}
             </select>
           </div>
           <div class="form-row">

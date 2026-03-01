@@ -102,7 +102,7 @@ function buildTree(activeGroup, activeCat) {
 
     const hd = document.createElement('div');
     hd.className = 'tree-group-hd' + (isOpen ? ' open' : '');
-    hd.innerHTML = `<span class="tree-arrow">▶</span>${g}<span class="tree-cnt" style="margin-left:auto">${items.length}</span>`;
+    hd.innerHTML = `<span class="tree-arrow">▶</span>${escHtml(g)}<span class="tree-cnt" style="margin-left:auto">${items.length}</span>`;
     hd.onclick = () => {
       isOpen ? _treeOpen.delete(g) : _treeOpen.add(g);
       buildTree(activeGroup, activeCat);
@@ -125,7 +125,7 @@ function buildTree(activeGroup, activeCat) {
       ci.className = 'tree-item' + (activeGroup === g && activeCat === cat ? ' active' : '');
       ci.style.paddingLeft = '36px';
       ci.href = url(`list.html?group=${encodeURIComponent(g)}&cat=${encodeURIComponent(cat)}`);
-      ci.innerHTML = `<span class="tree-icon" style="opacity:.4">└</span>${cat}<span class="tree-cnt">${cnt}</span>`;
+      ci.innerHTML = `<span class="tree-icon" style="opacity:.4">└</span>${escHtml(cat)}<span class="tree-cnt">${cnt}</span>`;
       ch.appendChild(ci);
     });
 

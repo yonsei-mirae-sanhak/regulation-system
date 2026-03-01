@@ -53,7 +53,7 @@ function renderTimeline(fromDate, toDate) {
   });
 
   const dateOpts = (sel) => reg.history.map((h, i) =>
-    `<option value="${h.date||''}" ${h.date===sel?'selected':''}>${h.date||'날짜없음'} (${i===0?'제정':'개정'})</option>`
+    `<option value="${escHtml(h.date||'')}" ${h.date===sel?'selected':''}>${escHtml(h.date||'날짜없음')} (${i===0?'제정':'개정'})</option>`
   ).join('');
 
   const allArticles = collectAllArticles(filtered.map(h => h.body || ''));
@@ -61,7 +61,7 @@ function renderTimeline(fromDate, toDate) {
   const headers = filtered.map((h, i) => {
     const isFirst = reg.history.indexOf(h) === 0;
     const tag = isFirst ? 'th-tag-new' : 'th-tag-rev';
-    return `<th>${reg.title} ${h.date||''} <span class="th-tag ${tag}">${isFirst?'제정':'개정'}</span></th>`;
+    return `<th>${escHtml(reg.title)} ${escHtml(h.date||'')} <span class="th-tag ${tag}">${isFirst?'제정':'개정'}</span></th>`;
   }).join('');
 
   const rows = allArticles.map((artKey, rowIdx) => {
@@ -91,13 +91,13 @@ function renderTimeline(fromDate, toDate) {
   document.getElementById('content').innerHTML = `
     <div class="breadcrumb">
       <a class="bc-link" href="index.html">홈</a> ›
-      <a class="bc-link" href="list.html?group=${encodeURIComponent(reg.group)}">${reg.group}</a> ›
-      <a class="bc-link" href="detail.html?id=${reg.id}">${reg.title}</a> › 조항연혁
+      <a class="bc-link" href="list.html?group=${encodeURIComponent(reg.group)}">${escHtml(reg.group)}</a> ›
+      <a class="bc-link" href="detail.html?id=${encodeURIComponent(reg.id)}">${escHtml(reg.title)}</a> › 조항연혁
     </div>
     <div class="timeline-page">
       <div class="timeline-top">
         <div class="timeline-top-title">🕐 조항연혁 보기</div>
-        <div class="timeline-top-sub">${reg.title} — 버전별 조항 변경 이력</div>
+        <div class="timeline-top-sub">${escHtml(reg.title)} — 버전별 조항 변경 이력</div>
       </div>
       <div class="timeline-controls">
         <label>연혁</label>
