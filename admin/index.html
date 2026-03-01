@@ -100,6 +100,8 @@ function togglePw() {
   inp.type = inp.type === 'password' ? 'text' : 'password';
 }
 
+let _loginFailCount = 0;
+
 async function doLogin() {
   const email = document.getElementById('loginEmail').value.trim();
   const pw    = document.getElementById('loginPw').value;
@@ -119,11 +121,22 @@ async function doLogin() {
   const result = await Auth.signIn(email, pw);
 
   if (result.ok) {
+    _loginFailCount = 0;
     location.href = getSafeRedirect();
   } else {
+    _loginFailCount++;
+    const lockSec = _loginFailCount >= 5 ? 30 : _loginFailCount >= 3 ? 10 : 0;
     err.textContent = '이메일 또는 비밀번호가 올바르지 않습니다.';
-    btn.textContent = '로그인';
-    btn.disabled = false;
+    if (lockSec > 0) {
+      err.textContent += ` (${lockSec}초 후 재시도 가능)`;
+      setTimeout(() => {
+        btn.textContent = '로그인';
+        btn.disabled = false;
+      }, lockSec * 1000);
+    } else {
+      btn.textContent = '로그인';
+      btn.disabled = false;
+    }
   }
 }
 </script>

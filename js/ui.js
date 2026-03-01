@@ -135,7 +135,6 @@ function buildTree(activeGroup, activeCat) {
 
 function onSbSearch(q) {
   if (!q.trim()) { buildTree(); return; }
-  const results = _allRegs.filter(r => r.title.includes(q));
   location.href = url(`list.html?q=${encodeURIComponent(q)}`);
 }
 

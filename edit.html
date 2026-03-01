@@ -30,6 +30,7 @@
 <script>
 let editReg = null;
 const isEdit = !!getParam('id');
+const VALID_STATUSES = ['active', 'draft', 'obsolete'];
 
 (async () => {
   await commonInit(null, null, null);
@@ -129,6 +130,8 @@ async function saveReg() {
   const revNote = document.getElementById('fRevNote')?.value.trim() || '';
 
   if (!title || !group || !body) { showToast('⚠️ 필수 항목을 모두 입력해주세요'); return; }
+  if (!GROUPS.includes(group)) { showToast('⚠️ 유효하지 않은 대분류입니다'); return; }
+  if (!VALID_STATUSES.includes(status)) { showToast('⚠️ 유효하지 않은 상태값입니다'); return; }
 
   const today = new Date().toISOString().split('T')[0];
   let reg;
@@ -157,7 +160,7 @@ async function saveReg() {
   const ok = await DB.upsert(reg);
   if (ok) {
     showToast('✅ 저장되었습니다');
-    setTimeout(() => location.href = `detail.html?id=${reg.id}`, 600);
+    setTimeout(() => location.href = `detail.html?id=${encodeURIComponent(reg.id)}`, 600);
   } else {
     showToast('❌ 저장 중 오류가 발생했습니다');
     btn.textContent = '💾 저장'; btn.disabled = false;

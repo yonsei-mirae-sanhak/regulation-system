@@ -92,6 +92,10 @@ function renderDiffPage(oi, ni) {
 function applyDiff() {
   const oi = parseInt(document.getElementById('diffOld').value);
   const ni = parseInt(document.getElementById('diffNew').value);
+  const maxIdx = reg.history.length - 1;
+  if (isNaN(oi) || isNaN(ni) || oi < 0 || ni < 0 || oi > maxIdx || ni > maxIdx) {
+    showToast('⚠️ 유효하지 않은 버전입니다'); return;
+  }
   if (oi === ni) { showToast('⚠️ 서로 다른 버전을 선택해주세요'); return; }
   renderDiffPage(oi, ni);
 }
