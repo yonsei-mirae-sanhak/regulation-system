@@ -30,7 +30,9 @@
 <script>
 (async () => {
   await commonInit('home', null, null);
-
+  initSidebarAutocomplete();
+  initHomeAutocomplete();
+  
   const regs = _allRegs;
   const recent = [...regs]
     .sort((a, b) => (b.history.at(-1)?.date || '').localeCompare(a.history.at(-1)?.date || ''))
