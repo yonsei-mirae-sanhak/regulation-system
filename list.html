@@ -37,6 +37,8 @@
 
   const nav = recent ? 'recent' : 'list';
   await commonInit(nav, group, cat);
+  initSidebarAutocomplete();   // ← 추가
+
 
   const regs = _allRegs;
   let filtered = regs;
@@ -63,7 +65,10 @@
         ${isRecent ? '🆕' : '📂'} ${label}
         <span class="cat-badge">${filtered.length}건</span>
       </div>
-      ${Auth.isAdmin ? `<a class="btn-new-reg" href="edit.html">＋ 규정 등록</a>` : ''}
+    <div style="display:flex;gap:8px;align-items:center">
+        <button class="btn-print" onclick="printList()">🖨️ 인쇄</button>
+        ${Auth.isAdmin ? `<a class="btn-new-reg" href="edit.html">＋ 규정 등록</a>` : ''}
+      </div>
     </div>
     ${filtered.length === 0
       ? '<div class="reg-table"><div class="empty-tbl">등록된 규정이 없습니다</div></div>'
