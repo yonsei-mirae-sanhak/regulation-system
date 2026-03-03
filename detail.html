@@ -53,6 +53,7 @@ let currentReg = null;
   if (!id) { location.href = 'index.html'; return; }
 
   await commonInit(null, null, null);
+  initSidebarAutocomplete(); 
 
   // DB에서 단건 조회
   currentReg = await DB.fetchOne(id);
@@ -139,7 +140,7 @@ async function confirmDelete() {
 }
 
 function printPDF() {
-  window.print();
+  printRegulation();
 }
 
 document.querySelector('.modal-backdrop').addEventListener('click', e => {
