@@ -214,3 +214,143 @@ function closeSidebar() {
   overlay && overlay.classList.remove('show');
   document.body.style.overflow = '';
 }
+
+// ═══════════════════════════════════════════
+//  자동완성 검색 + 인쇄 기능
+// ═══════════════════════════════════════════
+
+function attachAutocomplete(inputId, opts) {
+  opts = opts || {};
+  var input = document.getElementById(inputId);
+  if (!input) return;
+  var minLen   = opts.minLen   || 2;
+  var maxItems = opts.maxItems || 8;
+  var onSelect = opts.onSelect || function(reg) {
+    location.href = url('detail.html?id=' + reg.id);
+  };
+
+  var wrap = input.parentElement;
+  wrap.style.position = 'relative';
+
+  var dd = document.createElement('div');
+  dd.className = 'ac-dropdown';
+  dd.id = inputId + '_ac';
+  wrap.appendChild(dd);
+
+  var activeIdx = -1, filtered = [];
+
+  function render(items) {
+    filtered = items; activeIdx = -1;
+    if (!items.length) { dd.classList.remove('open'); return; }
+    dd.innerHTML = items.map(function(r, i) {
+      var last = r.history && r.history.length ? r.history[r.history.length-1] : null;
+      var ds = last ? last.date : '';
+      return '<div class="ac-item" data-idx="'+i+'">'
+        + '<span class="ac-title">' + hlMatch(r.title, input.value) + '</span>'
+        + '<span class="ac-meta">' + (r.group||'') + (ds?' · '+ds:'') + '</span></div>';
+    }).join('');
+    dd.classList.add('open');
+  }
+
+  function hlMatch(t, q) {
+    if (!q) return escHtml(t);
+    var esc = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return escHtml(t).replace(new RegExp('('+esc+')','gi'), '<mark class="ac-mark">$1</mark>');
+  }
+
+  function close() { dd.classList.remove('open'); activeIdx = -1; }
+
+  input.addEventListener('input', function() {
+    var q = input.value.trim();
+    if (q.length < minLen) { close(); return; }
+    render(_allRegs.filter(function(r) {
+      return r.title.toLowerCase().includes(q.toLowerCase());
+    }).slice(0, maxItems));
+  });
+
+  input.addEventListener('keydown', function(e) {
+    if (!dd.classList.contains('open')) return;
+    var items = dd.querySelectorAll('.ac-item');
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      activeIdx = Math.min(activeIdx+1, items.length-1);
+      items.forEach(function(el,i){ el.classList.toggle('ac-active', i===activeIdx); });
+      if (items[activeIdx]) items[activeIdx].scrollIntoView({block:'nearest'});
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      activeIdx = Math.max(activeIdx-1, 0);
+      items.forEach(function(el,i){ el.classList.toggle('ac-active', i===activeIdx); });
+      if (items[activeIdx]) items[activeIdx].scrollIntoView({block:'nearest'});
+    } else if (e.key === 'Enter' && activeIdx >= 0) {
+      e.preventDefault(); onSelect(filtered[activeIdx]); close();
+    } else if (e.key === 'Escape') { close(); }
+  });
+
+  dd.addEventListener('mousedown', function(e) {
+    var item = e.target.closest('.ac-item');
+    if (!item) return;
+    e.preventDefault();
+    onSelect(filtered[parseInt(item.dataset.idx)]); close();
+  });
+
+  input.addEventListener('blur', function() { setTimeout(close, 200); });
+}
+
+// 사이드바 자동완성
+function initSidebarAutocomplete() {
+  var sb = document.getElementById('sbSearch');
+  if (!sb) return;
+  sb.removeAttribute('oninput');
+  sb.placeholder = '규정명 검색... (2글자 이상)';
+  attachAutocomplete('sbSearch', { minLen:2, maxItems:6,
+    onSelect: function(r){ location.href = url('detail.html?id='+r.id); }
+  });
+  sb.addEventListener('keydown', function(e) {
+    var ac = document.getElementById('sbSearch_ac');
+    if (e.key==='Enter' && !(ac && ac.querySelector('.ac-active'))) {
+      var q = sb.value.trim();
+      if (q) location.href = url('list.html?q='+encodeURIComponent(q));
+    }
+  });
+}
+
+// 홈 검색바 자동완성
+function initHomeAutocomplete() {
+  if (!document.getElementById('hsInput')) return;
+  attachAutocomplete('hsInput', { minLen:2, maxItems:8,
+    onSelect: function(r){ location.href = url('detail.html?id='+r.id); }
+  });
+}
+
+// ── 인쇄 기능 ──
+function printRegulation() {
+  var ph = document.querySelector('.print-header');
+  if (!ph) {
+    ph = document.createElement('div');
+    ph.className = 'print-header';
+    var c = document.getElementById('content');
+    if (c) c.insertBefore(ph, c.firstChild);
+  }
+  var t = document.querySelector('.detail-ttl');
+  var title = t ? t.textContent : '규정';
+  var d = new Date();
+  var ds = d.getFullYear()+'.'+String(d.getMonth()+1).padStart(2,'0')+'.'+String(d.getDate()).padStart(2,'0');
+  ph.innerHTML = '<h1>규정관리시스템</h1><p>출력일: '+ds+' | '+escHtml(title)+'</p>';
+  setTimeout(function(){ window.print(); }, 100);
+}
+
+function printList() {
+  var ph = document.querySelector('.print-header');
+  if (!ph) {
+    ph = document.createElement('div');
+    ph.className = 'print-header';
+    var c = document.getElementById('content');
+    if (c) c.insertBefore(ph, c.firstChild);
+  }
+  var d = new Date();
+  var ds = d.getFullYear()+'.'+String(d.getMonth()+1).padStart(2,'0')+'.'+String(d.getDate()).padStart(2,'0');
+  var vt = document.querySelector('.view-ttl');
+  var title = vt ? vt.textContent.trim() : '규정 목록';
+  ph.innerHTML = '<h1>규정관리시스템 — '+escHtml(title)+'</h1><p>출력일: '+ds+'</p>';
+  setTimeout(function(){ window.print(); }, 100);
+}
