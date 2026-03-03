@@ -1,10 +1,10 @@
-const SUPABASE_URL = 'https://regulation-system.supabase.com';
+const SUPABASE_URL = 'https://wcjymtpobpveaawnalqw.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndjanltdHBvYnB2ZWFhd25hbHF3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIxOTI5NjMsImV4cCI6MjA4Nzc2ODk2M30._FGF2omzLKX33bdBE_LQGrme_4R_WOJ6WebU2E3JXOU';
 
 let _sb = null;
 function getSupabase() {
   if (_sb) return _sb;
-  if (SUPABASE_URL === 'https://regulation-system.supabase.com') return null;
+  if (SUPABASE_URL === 'https://wcjymtpobpveaawnalqw.supabase.co') return null;
   _sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
   return _sb;
 }
