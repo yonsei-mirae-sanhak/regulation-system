@@ -4,7 +4,7 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 let _sb = null;
 function getSupabase() {
   if (_sb) return _sb;
-  if (SUPABASE_URL === 'https://wcjymtpobpveaawnalqw.supabase.co') return null;
+  if (SUPABASE_URL === 'YOUR_SUPABASE_URL') return null;
   _sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
   return _sb;
 }
