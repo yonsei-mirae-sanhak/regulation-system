@@ -368,3 +368,33 @@ function renderFooter() {
     + '</div>';
   document.body.appendChild(footer);
 }
+
+// ── 로그인 시도 제한 ──
+const LoginGuard = {
+  MAX: 5,
+  LOCK_MIN: 15,
+  _key: 'login_attempts',
+  _get() {
+    try {
+      var d = JSON.parse(sessionStorage.getItem(this._key) || '{}');
+      if (d.lockUntil && Date.now() > d.lockUntil) return { count: 0 };
+      return d;
+    } catch { return { count: 0 }; }
+  },
+  isLocked() {
+    var d = this._get();
+    return d.lockUntil && Date.now() < d.lockUntil;
+  },
+  remaining() {
+    var d = this._get();
+    if (this.isLocked()) return 0;
+    return this.MAX - (d.count || 0);
+  },
+  fail() {
+    var d = this._get();
+    d.count = (d.count || 0) + 1;
+    if (d.count >= this.MAX) d.lockUntil = Date.now() + this.LOCK_MIN * 60000;
+    sessionStorage.setItem(this._key, JSON.stringify(d));
+  },
+  reset() { sessionStorage.removeItem(this._key); }
+};
