@@ -1,4 +1,7 @@
-// ── 경로 prefix (GitHub Pages 서브폴더 대응) ──
+// ═══════════════════════════════════════════
+//  1. 경로 / 유틸리티
+// ═══════════════════════════════════════════
+
 const ROOT = (() => {
   const p = location.pathname;
   const m = p.match(/^(\/[^/]+\/)/);
@@ -7,7 +10,82 @@ const ROOT = (() => {
 
 function url(path) { return ROOT + path; }
 
-// ── 헤더 렌더 ──
+function escHtml(s) {
+  return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function getParam(key) {
+  return new URLSearchParams(location.search).get(key);
+}
+
+// ═══════════════════════════════════════════
+//  2. 토스트
+// ═══════════════════════════════════════════
+
+let _toastTimer;
+function showToast(msg) {
+  let t = document.getElementById('toast');
+  if (!t) { t = document.createElement('div'); t.id = 'toast'; document.body.appendChild(t); }
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// ═══════════════════════════════════════════
+//  3. 배지 헬퍼
+// ═══════════════════════════════════════════
+
+function sBadge(s) {
+  const m = { active: ['시행중', 'sbadge-active'], draft: ['초안', 'sbadge-draft'], obsolete: ['폐기', 'sbadge-obsolete'] };
+  const [l, c] = m[s] || ['—', ''];
+  return `<span class="sbadge ${c}">${l}</span>`;
+}
+
+function rtypeBadge(reg) {
+  const isNew = reg.history.length === 1;
+  const tc = isNew ? 'rtype-new' : reg.status === 'obsolete' ? 'rtype-obs' : 'rtype-rev';
+  const tl = isNew ? '제정' : reg.status === 'obsolete' ? '폐기' : '개정';
+  return `<span class="rtype ${tc}">${tl}</span>`;
+}
+
+// ═══════════════════════════════════════════
+//  4. 로그인 시도 제한
+// ═══════════════════════════════════════════
+
+const LoginGuard = {
+  MAX: 5,
+  LOCK_MIN: 15,
+  _key: 'login_attempts',
+  _get() {
+    try {
+      var d = JSON.parse(sessionStorage.getItem(this._key) || '{}');
+      if (d.lockUntil && Date.now() > d.lockUntil) return { count: 0 };
+      return d;
+    } catch { return { count: 0 }; }
+  },
+  isLocked() {
+    var d = this._get();
+    return d.lockUntil && Date.now() < d.lockUntil;
+  },
+  remaining() {
+    var d = this._get();
+    if (this.isLocked()) return 0;
+    return this.MAX - (d.count || 0);
+  },
+  fail() {
+    var d = this._get();
+    d.count = (d.count || 0) + 1;
+    if (d.count >= this.MAX) d.lockUntil = Date.now() + this.LOCK_MIN * 60000;
+    sessionStorage.setItem(this._key, JSON.stringify(d));
+  },
+  reset() { sessionStorage.removeItem(this._key); }
+};
+
+// ═══════════════════════════════════════════
+//  5. 헤더
+// ═══════════════════════════════════════════
+
 function renderHeader(activeNav) {
   const el = document.getElementById('header');
   if (!el) return;
@@ -29,7 +107,6 @@ function renderHeader(activeNav) {
     </nav>
     <div class="header-right" id="headerRight"></div>`;
 
-  // 사이드바 오버레이 생성
   if (!document.getElementById('sidebarOverlay')) {
     const overlay = document.createElement('div');
     overlay.className = 'sidebar-overlay';
@@ -40,7 +117,6 @@ function renderHeader(activeNav) {
   updateAdminUI();
 }
 
-// ── 관리자 UI 갱신 ──
 function updateAdminUI() {
   const el = document.getElementById('headerRight');
   if (!el) return;
@@ -63,7 +139,10 @@ async function handleLogout() {
   setTimeout(() => location.href = url('index.html'), 800);
 }
 
-// ── 사이드바 렌더 ──
+// ═══════════════════════════════════════════
+//  6. 사이드바
+// ═══════════════════════════════════════════
+
 let _treeOpen = new Set(['학사', '인사', '재무', 'IT보안']);
 let _allRegs = [];
 
@@ -80,13 +159,13 @@ async function renderSidebar(activeGroup, activeCat) {
     </div>
     <div class="tree-section" id="treeSection"></div>`;
 
-  // 접기 버튼 별도 추가
+  // 접기 버튼 별도 추가 (innerHTML 이후에 appendChild)
   if (!document.getElementById('sbCollapseBtn')) {
     var btn = document.createElement('button');
     btn.className = 'sb-collapse-btn';
     btn.id = 'sbCollapseBtn';
     btn.title = '사이드바 접기';
-    btn.textContent = '◀';
+    btn.textContent = '\u25C0';
     btn.onclick = toggleSidebarCollapse;
     el.appendChild(btn);
   }
@@ -94,6 +173,7 @@ async function renderSidebar(activeGroup, activeCat) {
   if (!_allRegs.length) _allRegs = LocalCache.load();
   buildTree(activeGroup, activeCat);
 }
+
 function buildTree(activeGroup, activeCat) {
   const sec = document.getElementById('treeSection');
   if (!sec) return;
@@ -145,62 +225,7 @@ function buildTree(activeGroup, activeCat) {
 
 function onSbSearch(q) {
   if (!q.trim()) { buildTree(); return; }
-  const results = _allRegs.filter(r => r.title.includes(q));
   location.href = url(`list.html?q=${encodeURIComponent(q)}`);
-}
-
-// ── 헬퍼 ──
-function sBadge(s) {
-  const m = { active: ['시행중', 'sbadge-active'], draft: ['초안', 'sbadge-draft'], obsolete: ['폐기', 'sbadge-obsolete'] };
-  const [l, c] = m[s] || ['—', ''];
-  return `<span class="sbadge ${c}">${l}</span>`;
-}
-
-function rtypeBadge(reg) {
-  const isNew = reg.history.length === 1;
-  const tc = isNew ? 'rtype-new' : reg.status === 'obsolete' ? 'rtype-obs' : 'rtype-rev';
-  const tl = isNew ? '제정' : reg.status === 'obsolete' ? '폐기' : '개정';
-  return `<span class="rtype ${tc}">${tl}</span>`;
-}
-
-function escHtml(s) {
-  return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-}
-
-// ── 토스트 ──
-let _toastTimer;
-function showToast(msg) {
-  let t = document.getElementById('toast');
-  if (!t) { t = document.createElement('div'); t.id = 'toast'; document.body.appendChild(t); }
-  t.textContent = msg;
-  t.classList.add('show');
-  clearTimeout(_toastTimer);
-  _toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
-}
-
-// ── URL 파라미터 ──
-function getParam(key) {
-  return new URLSearchParams(location.search).get(key);
-}
-
-// ── 공통 초기화 ──
-async function commonInit(activeNav, activeGroup, activeCat) {
-  await Auth.restore();
-  renderHeader(activeNav);
-  // 데이터 미리 로드 (캐시 없으면 DB에서)
-  const cached = LocalCache.load();
-  if (cached.length) {
-    _allRegs = cached;
-  } else {
-    _allRegs = await DB.fetchAll();
-    if (!_allRegs.length) {
-      await DB.initWithSample();
-      _allRegs = LocalCache.load();
-    }
-  }
-  await renderSidebar(activeGroup, activeCat);
-  renderFooter();
-  initSidebarAutocomplete();  
 }
 
 // ── 사이드바 토글 (모바일) ──
@@ -227,8 +252,19 @@ function closeSidebar() {
   document.body.style.overflow = '';
 }
 
+// ── 사이드바 접기/펼치기 (PC) ──
+function toggleSidebarCollapse() {
+  var sb = document.getElementById('sidebar');
+  var main = document.getElementById('main');
+  var btn = document.getElementById('sbCollapseBtn');
+  if (!sb) return;
+  var collapsed = sb.classList.toggle('collapsed');
+  if (main) main.classList.toggle('sidebar-collapsed', collapsed);
+  if (btn) btn.textContent = collapsed ? '\u25B6' : '\u25C0';
+}
+
 // ═══════════════════════════════════════════
-//  자동완성 검색 + 인쇄 기능
+//  7. 자동완성 검색
 // ═══════════════════════════════════════════
 
 function attachAutocomplete(inputId, opts) {
@@ -259,7 +295,7 @@ function attachAutocomplete(inputId, opts) {
       var ds = last ? last.date : '';
       return '<div class="ac-item" data-idx="'+i+'">'
         + '<span class="ac-title">' + hlMatch(r.title, input.value) + '</span>'
-        + '<span class="ac-meta">' + (r.group||'') + (ds?' · '+ds:'') + '</span></div>';
+        + '<span class="ac-meta">' + (r.group||'') + (ds?' \u00B7 '+ds:'') + '</span></div>';
     }).join('');
     dd.classList.add('open');
   }
@@ -308,7 +344,6 @@ function attachAutocomplete(inputId, opts) {
   input.addEventListener('blur', function() { setTimeout(close, 200); });
 }
 
-// 사이드바 자동완성
 function initSidebarAutocomplete() {
   var sb = document.getElementById('sbSearch');
   if (!sb) return;
@@ -326,7 +361,6 @@ function initSidebarAutocomplete() {
   });
 }
 
-// 홈 검색바 자동완성
 function initHomeAutocomplete() {
   if (!document.getElementById('hsInput')) return;
   attachAutocomplete('hsInput', { minLen:2, maxItems:8,
@@ -334,7 +368,10 @@ function initHomeAutocomplete() {
   });
 }
 
-// ── 인쇄 기능 ──
+// ═══════════════════════════════════════════
+//  8. 인쇄 기능
+// ═══════════════════════════════════════════
+
 function printRegulation() {
   var ph = document.querySelector('.print-header');
   if (!ph) {
@@ -363,11 +400,14 @@ function printList() {
   var ds = d.getFullYear()+'.'+String(d.getMonth()+1).padStart(2,'0')+'.'+String(d.getDate()).padStart(2,'0');
   var vt = document.querySelector('.view-ttl');
   var title = vt ? vt.textContent.trim() : '규정 목록';
-  ph.innerHTML = '<h1>규정관리시스템 — '+escHtml(title)+'</h1><p>출력일: '+ds+'</p>';
+  ph.innerHTML = '<h1>규정관리시스템 \u2014 '+escHtml(title)+'</h1><p>출력일: '+ds+'</p>';
   setTimeout(function(){ window.print(); }, 100);
 }
 
-// ── 푸터 렌더 ──
+// ═══════════════════════════════════════════
+//  9. 푸터
+// ═══════════════════════════════════════════
+
 function renderFooter() {
   if (document.getElementById('appFooter')) return;
   var footer = document.createElement('footer');
@@ -379,42 +419,24 @@ function renderFooter() {
   document.body.appendChild(footer);
 }
 
-// ── 로그인 시도 제한 ──
-const LoginGuard = {
-  MAX: 5,
-  LOCK_MIN: 15,
-  _key: 'login_attempts',
-  _get() {
-    try {
-      var d = JSON.parse(sessionStorage.getItem(this._key) || '{}');
-      if (d.lockUntil && Date.now() > d.lockUntil) return { count: 0 };
-      return d;
-    } catch { return { count: 0 }; }
-  },
-  isLocked() {
-    var d = this._get();
-    return d.lockUntil && Date.now() < d.lockUntil;
-  },
-  remaining() {
-    var d = this._get();
-    if (this.isLocked()) return 0;
-    return this.MAX - (d.count || 0);
-  },
-  fail() {
-    var d = this._get();
-    d.count = (d.count || 0) + 1;
-    if (d.count >= this.MAX) d.lockUntil = Date.now() + this.LOCK_MIN * 60000;
-    sessionStorage.setItem(this._key, JSON.stringify(d));
-  },
-  reset() { sessionStorage.removeItem(this._key); }
-};
-// ── 사이드바 접기/펼치기 (PC) ──
-function toggleSidebarCollapse() {
-  var sb = document.getElementById('sidebar');
-  var main = document.getElementById('main');
-  var btn = document.getElementById('sbCollapseBtn');
-  if (!sb) return;
-  var collapsed = sb.classList.toggle('collapsed');
-  if (main) main.classList.toggle('sidebar-collapsed', collapsed);
-  if (btn) btn.textContent = collapsed ? '▶' : '◀';
+// ═══════════════════════════════════════════
+//  10. 공통 초기화
+// ═══════════════════════════════════════════
+
+async function commonInit(activeNav, activeGroup, activeCat) {
+  await Auth.restore();
+  renderHeader(activeNav);
+  const cached = LocalCache.load();
+  if (cached.length) {
+    _allRegs = cached;
+  } else {
+    _allRegs = await DB.fetchAll();
+    if (!_allRegs.length) {
+      await DB.initWithSample();
+      _allRegs = LocalCache.load();
+    }
+  }
+  await renderSidebar(activeGroup, activeCat);
+  renderFooter();
+  initSidebarAutocomplete();
 }
