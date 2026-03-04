@@ -35,17 +35,4 @@ const Auth = {
     this._email = '';
   }
 
-  // 자동아웃
-let _idleTimer;
-function resetIdleTimer() {
-  clearTimeout(_idleTimer);
-  if (!Auth.isAdmin) return;
-  _idleTimer = setTimeout(function() {
-    Auth.signOut();
-    showToast('⏱️ 장시간 미사용으로 자동 로그아웃되었습니다');
-    setTimeout(function(){ location.href = url('index.html'); }, 1500);
-  }, 30 * 60 * 1000); // 30분
-}
-document.addEventListener('mousemove', resetIdleTimer);
-document.addEventListener('keydown', resetIdleTimer);
 };
