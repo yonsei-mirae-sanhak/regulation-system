@@ -189,6 +189,8 @@ async function commonInit(activeNav, activeGroup, activeCat) {
     }
   }
   await renderSidebar(activeGroup, activeCat);
+  renderFooter();
+  initSidebarAutocomplete();  
 }
 
 // ── 사이드바 토글 (모바일) ──
