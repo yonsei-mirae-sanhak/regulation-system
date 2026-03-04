@@ -492,30 +492,48 @@ body { font-family: 'Pretendard', sans-serif; background: var(--paper); color: v
 @media print {
   #appFooter { display: none !important; }
 }
-/* ── 사이드바 접기 버튼 (PC) ── */
-.sb-collapse-btn {
-  display: none;
-  position: absolute;
-  bottom: 14px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 36px;
-  height: 36px;
-  border: 1.5px solid var(--border);
-  border-radius: 8px;
-  background: var(--white);
-  color: var(--text-3);
-  font-size: 13px;
-  cursor: pointer;
-  transition: all .15s;
-  z-index: 11;
-}
-.sb-collapse-btn:hover {
-  background: var(--accent-light);
-  color: var(--accent);
-  border-color: var(--accent);
-}
+/* ── 사이드바 접기 (PC) ── */
+@media (min-width: 769px) {
+  .sb-collapse-btn { display: block; }
 
+  #sidebar {
+    transition: width .25s ease, transform .25s ease;
+  }
+  #sidebar .sb-search-box,
+  #sidebar .tree-section {
+    transition: opacity .2s ease;
+  }
+  #main {
+    transition: margin-left .25s ease;
+  }
+
+  /* 접힌 상태 */
+  #sidebar.collapsed {
+    width: 0;
+    overflow: hidden;
+    border-right: none;
+  }
+  #sidebar.collapsed .sb-search-box,
+  #sidebar.collapsed .tree-section {
+    opacity: 0;
+    pointer-events: none;
+  }
+  #sidebar.collapsed .sb-collapse-btn {
+    position: fixed;
+    left: 0;
+    bottom: auto;
+    top: calc(var(--header-h) + 10px);
+    transform: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 0 6px 6px 0;
+    z-index: 101;
+  }
+
+  #main.sidebar-collapsed {
+    margin-left: 0;
+  }
+}
 /* PC에서만 표시 */
 @media (min-width: 769px) {
   .sb-collapse-btn { display: block; }
