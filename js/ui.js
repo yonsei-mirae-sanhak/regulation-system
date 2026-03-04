@@ -354,3 +354,15 @@ function printList() {
   ph.innerHTML = '<h1>규정관리시스템 — '+escHtml(title)+'</h1><p>출력일: '+ds+'</p>';
   setTimeout(function(){ window.print(); }, 100);
 }
+
+// ── 푸터 렌더 ──
+function renderFooter() {
+  if (document.getElementById('appFooter')) return;
+  var footer = document.createElement('footer');
+  footer.id = 'appFooter';
+  footer.innerHTML = '<div class="footer-inner">'
+    + '<p class="footer-addr">(26493) 강원도 원주시 연세대길 1 연세대학교 미래캠퍼스 미래산학협력단(산학관 505호)</p>'
+    + '<p class="footer-copy">COPYRIGHTu00A9 YONSEI UNIVERSITY MIRAE CAMPUS ALL RIGHTS RESERVED.</p>'
+    + '</div>';
+  document.body.appendChild(footer);
+}
