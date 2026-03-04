@@ -78,7 +78,8 @@ async function renderSidebar(activeGroup, activeCat) {
         <input type="text" id="sbSearch" placeholder="규정명 검색..." oninput="onSbSearch(this.value)">
       </div>
     </div>
-    <div class="tree-section" id="treeSection"></div>`;
+    <div class="tree-section" id="treeSection"></div>
+    <button class="sb-collapse-btn" id="sbCollapseBtn" onclick="toggleSidebarCollapse()" title="사이드바 접기">◀</button>`;
 
   if (!_allRegs.length) _allRegs = LocalCache.load();
   buildTree(activeGroup, activeCat);
@@ -398,3 +399,13 @@ const LoginGuard = {
   },
   reset() { sessionStorage.removeItem(this._key); }
 };
+// ── 사이드바 접기/펼치기 (PC) ──
+function toggleSidebarCollapse() {
+  var sb = document.getElementById('sidebar');
+  var main = document.getElementById('main');
+  var btn = document.getElementById('sbCollapseBtn');
+  if (!sb) return;
+  var collapsed = sb.classList.toggle('collapsed');
+  if (main) main.classList.toggle('sidebar-collapsed', collapsed);
+  if (btn) btn.textContent = collapsed ? '▶' : '◀';
+}
