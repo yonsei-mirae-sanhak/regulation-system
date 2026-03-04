@@ -462,3 +462,33 @@ body { font-family: 'Pretendard', sans-serif; background: var(--paper); color: v
   .ac-item { padding: 9px 12px; }
   .btn-print { font-size: 12px; padding: 7px 12px; }
 }
+
+/* ── FOOTER ── */
+#appFooter {
+  background: var(--navy);
+  color: rgba(255,255,255,.5);
+  padding: 24px 20px;
+  margin-left: var(--sidebar-w);
+  text-align: center;
+}
+.footer-inner { max-width: 800px; margin: 0 auto; }
+.footer-addr {
+  font-size: 12px;
+  line-height: 1.7;
+  margin-bottom: 6px;
+  color: rgba(255,255,255,.45);
+}
+.footer-copy {
+  font-size: 11px;
+  letter-spacing: .5px;
+  color: rgba(255,255,255,.3);
+}
+
+@media (max-width: 768px) {
+  #appFooter { margin-left: 0; padding: 20px 16px; }
+  .footer-addr { font-size: 11px; }
+}
+
+@media print {
+  #appFooter { display: none !important; }
+}
