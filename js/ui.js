@@ -257,9 +257,11 @@ function toggleSidebarCollapse() {
   var sb = document.getElementById('sidebar');
   var main = document.getElementById('main');
   var btn = document.getElementById('sbCollapseBtn');
+  var footer = document.getElementById('appFooter');
   if (!sb) return;
   var collapsed = sb.classList.toggle('collapsed');
   if (main) main.classList.toggle('sidebar-collapsed', collapsed);
+  if (footer) footer.style.marginLeft = collapsed ? '0' : '';
   if (btn) btn.textContent = collapsed ? '\u25B6' : '\u25C0';
 }
 
