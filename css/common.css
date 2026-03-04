@@ -470,6 +470,11 @@ body { font-family: 'Pretendard', sans-serif; background: var(--paper); color: v
   padding: 24px 20px;
   margin-left: var(--sidebar-w);
   text-align: center;
+  transition: margin-left .25s ease;
+}
+.sidebar-collapsed ~ #appFooter,
+#appFooter {
+  width: auto;
 }
 .footer-inner { max-width: 800px; margin: 0 auto; }
 .footer-addr {
@@ -486,7 +491,8 @@ body { font-family: 'Pretendard', sans-serif; background: var(--paper); color: v
 
 @media (max-width: 768px) {
   #appFooter { margin-left: 0; padding: 20px 16px; }
-  .footer-addr { font-size: 11px; }
+  .footer-addr { font-size: 11px; word-break: keep-all; line-height: 1.8; }
+  .footer-copy { font-size: 9px; word-break: break-all; }
 }
 
 @media print {
@@ -531,6 +537,10 @@ body { font-family: 'Pretendard', sans-serif; background: var(--paper); color: v
   }
 
   #main.sidebar-collapsed {
+    margin-left: 0;
+  }
+  /* 푸터도 사이드바 접힘에 연동 */
+  .sidebar-collapsed ~ #appFooter {
     margin-left: 0;
   }
 }
