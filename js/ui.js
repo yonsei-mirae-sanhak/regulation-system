@@ -78,13 +78,22 @@ async function renderSidebar(activeGroup, activeCat) {
         <input type="text" id="sbSearch" placeholder="규정명 검색..." oninput="onSbSearch(this.value)">
       </div>
     </div>
-    <div class="tree-section" id="treeSection"></div>
-    <button class="sb-collapse-btn" id="sbCollapseBtn" onclick="toggleSidebarCollapse()" title="사이드바 접기">◀</button>`;
+    <div class="tree-section" id="treeSection"></div>`;
+
+  // 접기 버튼 별도 추가
+  if (!document.getElementById('sbCollapseBtn')) {
+    var btn = document.createElement('button');
+    btn.className = 'sb-collapse-btn';
+    btn.id = 'sbCollapseBtn';
+    btn.title = '사이드바 접기';
+    btn.textContent = '◀';
+    btn.onclick = toggleSidebarCollapse;
+    el.appendChild(btn);
+  }
 
   if (!_allRegs.length) _allRegs = LocalCache.load();
   buildTree(activeGroup, activeCat);
 }
-
 function buildTree(activeGroup, activeCat) {
   const sec = document.getElementById('treeSection');
   if (!sec) return;
