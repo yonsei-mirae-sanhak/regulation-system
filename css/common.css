@@ -496,3 +496,29 @@ body { font-family: 'Pretendard', sans-serif; background: var(--paper); color: v
 
   @page { margin: 15mm 12mm; }
 }
+
+/* ── 초성 검색바 ── */
+.chosung-bar {
+  display: flex; flex-wrap: wrap; gap: 4px;
+  margin-top: 12px;
+}
+.cho-btn {
+  min-width: 32px; height: 32px;
+  border: 1px solid var(--border); border-radius: 6px;
+  background: var(--white); color: var(--text-2);
+  font-size: 13px; font-weight: 600; font-family: 'Pretendard', sans-serif;
+  cursor: pointer; transition: all .15s;
+  display: flex; align-items: center; justify-content: center;
+}
+.cho-btn:hover { background: var(--accent-light); color: var(--accent); border-color: var(--accent); }
+.cho-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+.cho-all, .cho-etc { padding: 0 10px; font-size: 11px; }
+
+@media (max-width: 768px) {
+  .cho-btn { min-width: 28px; height: 28px; font-size: 12px; }
+  .cho-all, .cho-etc { padding: 0 8px; font-size: 10px; }
+}
+
+@media print {
+  .chosung-bar { display: none !important; }
+}
