@@ -442,3 +442,42 @@ async function commonInit(activeNav, activeGroup, activeCat) {
   renderFooter();
   initSidebarAutocomplete();
 }
+// ═══════════════════════════════════════════
+//  20. 초성 검색
+// ═══════════════════════════════════════════
+
+var CHOSUNG_LIST = ['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+var CHOSUNG_DISPLAY = ['ㄱ','ㄴ','ㄷ','ㄹ','ㅁ','ㅂ','ㅅ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+
+function getChosung(ch) {
+  var code = ch.charCodeAt(0) - 0xAC00;
+  if (code < 0 || code > 11171) return ch;
+  return CHOSUNG_LIST[Math.floor(code / 588)];
+}
+
+function filterByChosung(cho) {
+  var matched = _allRegs.filter(function(r) {
+    if (!r.title || r.title.length === 0) return false;
+    var first = getChosung(r.title.charAt(0));
+    if (cho === 'ㄱ') return first === 'ㄱ' || first === 'ㄲ';
+    if (cho === 'ㄷ') return first === 'ㄷ' || first === 'ㄸ';
+    if (cho === 'ㅂ') return first === 'ㅂ' || first === 'ㅃ';
+    if (cho === 'ㅅ') return first === 'ㅅ' || first === 'ㅆ';
+    if (cho === 'ㅈ') return first === 'ㅈ' || first === 'ㅉ';
+    return first === cho;
+  });
+  location.href = url('list.html?cho=' + encodeURIComponent(cho));
+}
+
+function renderChosungBar(containerId) {
+  var el = document.getElementById(containerId);
+  if (!el) return;
+  var html = '<div class="chosung-bar">';
+  html += '<button class="cho-btn cho-all" onclick="location.href=\'' + url('list.html') + '\'">전체</button>';
+  CHOSUNG_DISPLAY.forEach(function(cho) {
+    html += '<button class="cho-btn" onclick="filterByChosung(\'' + cho + '\')">' + cho + '</button>';
+  });
+  html += '<button class="cho-btn cho-etc" onclick="location.href=\'' + url('list.html?cho=etc') + '\'">A-Z</button>';
+  html += '</div>';
+  el.innerHTML = html;
+}
