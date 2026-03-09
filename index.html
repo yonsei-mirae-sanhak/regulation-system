@@ -5,12 +5,12 @@
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta http-equiv="X-Content-Type-Options" content="nosniff">
-<meta http-equiv="X-Frame-Options" content="DENY">
 <meta name="referrer" content="no-referrer">
 
 <title>연세대학교 미래산학협력단 규정관리시스템</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link rel="stylesheet" href="css/common.css">
+<link rel="stylesheet" href="css/chatbot.css">
 </head>
 <body>
 
@@ -32,18 +32,17 @@
 <script src="js/db.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/ui.js"></script>
+<script src="js/chatbot.js"></script>
 <script>
 (async () => {
   await commonInit('home', null, null);
-  initSidebarAutocomplete();
-  initHomeAutocomplete();
-  renderChosungBar('chosungArea');
-  
+
   const regs = _allRegs;
   const recent = [...regs]
     .sort((a, b) => (b.history.at(-1)?.date || '').localeCompare(a.history.at(-1)?.date || ''))
     .slice(0, 10);
 
+  // 1) 먼저 innerHTML로 화면을 그린다
   document.getElementById('content').innerHTML = `
     <div class="home-search-bar">
       <h2>🔍 규정 통합검색</h2>
@@ -60,7 +59,7 @@
     </div>
     <div class="view-hd" style="margin-bottom:14px">
       <div class="view-ttl" style="font-size:16px">🆕 최신 제·개정 규정</div>
-      <a href="list.html?recent=1" style="font-size:12px;color:var(--accent);text-decoration:none;">전체보기 →</a>
+      <a href="list.html?recent=1" style="font-size:12px;color:var(--accent);text-decoration:none;font-weight:600">전체보기 →</a>
     </div>
     <div class="reg-table">
       <table>
@@ -87,6 +86,11 @@
         </tbody>
       </table>
     </div>`;
+
+  // 2) innerHTML 완료 후에 초성바와 자동완성을 초기화
+  renderChosungBar('chosungArea');
+  initHomeAutocomplete();
+  if (typeof initChatbot === 'function') initChatbot();
 })();
 
 function doSearch() {
