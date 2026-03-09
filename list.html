@@ -2,15 +2,15 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="robots" content="noindex, nofollow"> 
+<meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta http-equiv="X-Content-Type-Options" content="nosniff">
-<meta http-equiv="X-Frame-Options" content="DENY">
 <meta name="referrer" content="no-referrer">
 
 <title>규정정보 — 연세대학교 미래산학협력단 규정관리시스템</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link rel="stylesheet" href="css/common.css">
+<link rel="stylesheet" href="css/chatbot.css">
 </head>
 <body>
 
@@ -32,6 +32,7 @@
 <script src="js/db.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/ui.js"></script>
+<script src="js/chatbot.js"></script>
 <script>
 (async () => {
   const group   = getParam('group');
@@ -43,8 +44,6 @@
 
   const nav = recent ? 'recent' : 'list';
   await commonInit(nav, group, cat);
-  initSidebarAutocomplete();   // ← 추가
-
 
   const regs = _allRegs;
   let filtered = regs;
@@ -91,7 +90,7 @@
         ${isRecent ? '🆕' : '📂'} ${label}
         <span class="cat-badge">${filtered.length}건</span>
       </div>
-    <div style="display:flex;gap:8px;align-items:center">
+      <div style="display:flex;gap:8px;align-items:center">
         <button class="btn-print" onclick="printList()">🖨️ 인쇄</button>
         ${Auth.isAdmin ? `<a class="btn-new-reg" href="edit.html">＋ 규정 등록</a>` : ''}
       </div>
@@ -125,6 +124,8 @@
             </tbody>
           </table>
         </div>`}`;
+
+  if (typeof initChatbot === 'function') initChatbot();
 })();
 </script>
 </body>
