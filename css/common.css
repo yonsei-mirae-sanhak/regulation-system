@@ -115,8 +115,7 @@ body::after { content:''; position:fixed; inset:0; background:url("data:image/sv
 .sidebar-overlay.show { display: block; }
 
 /* 사이드바 접기 버튼 */
-.sb-collapse-btn { display: none; position: absolute; top: 16px; right: 12px; width: 28px; height: 28px; border: 1.5px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--text-3); font-size: 12px; cursor: pointer; transition: all .15s; z-index: 11; }
-.sb-collapse-btn:hover { background: var(--accent-light); color: var(--accent); border-color: var(--accent); }
+.sb-collapse-btn { display: none; position: absolute; top: 19px; right: 8px; width: 26px; height: 26px; border: 1.5px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--text-3); font-size: 11px; cursor: pointer; transition: all .15s; z-index: 11; }.sb-collapse-btn:hover { background: var(--accent-light); color: var(--accent); border-color: var(--accent); }
 
 /* ═══════════════════════════════════════════
    6. 테이블
