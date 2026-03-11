@@ -5,12 +5,12 @@
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta http-equiv="X-Content-Type-Options" content="nosniff">
-<meta http-equiv="X-Frame-Options" content="DENY">
 <meta name="referrer" content="no-referrer">
 
 <title>규정 편집 — 연세대학교 미래산학협력단 규정관리시스템</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link rel="stylesheet" href="css/common.css">
+<link rel="stylesheet" href="css/chatbot.css">
 </head>
 <body>
 
@@ -32,6 +32,7 @@
 <script src="js/db.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/ui.js"></script>
+<script src="js/chatbot.js"></script>
 <script>
 let editReg = null;
 const isEdit = !!getParam('id');
@@ -39,7 +40,6 @@ const isEdit = !!getParam('id');
 (async () => {
   await commonInit(null, null, null);
 
-  // 관리자 아니면 쫓아내기
   if (!Auth.isAdmin) {
     showToast('⚠️ 관리자 로그인이 필요합니다');
     setTimeout(() => location.href = 'admin/index.html', 800);
@@ -52,10 +52,28 @@ const isEdit = !!getParam('id');
   }
 
   renderForm();
+  if (typeof initChatbot === 'function') initChatbot();
 })();
 
 function renderForm() {
   const reg = editReg;
+
+  // 기존 첨부파일 목록 HTML
+  var attachHtml = '';
+  if (reg && reg.attachments && reg.attachments.length) {
+    attachHtml = reg.attachments.map(function(a, i) {
+      return '<div class="attach-item" data-idx="' + i + '">'
+        + '<span class="attach-icon">' + (a.type === 'pdf' ? '📄' : '📎') + '</span>'
+        + '<div class="attach-info">'
+        + '<span class="attach-name">' + escHtml(a.name) + '</span>'
+        + '<span class="attach-type">' + (a.type === 'pdf' ? '원문 PDF' : '서식') + '</span>'
+        + '</div>'
+        + '<a href="' + escHtml(a.url) + '" target="_blank" class="attach-link">열기</a>'
+        + '<button class="attach-del" onclick="removeAttach(' + i + ')">✕</button>'
+        + '</div>';
+    }).join('');
+  }
+
   document.getElementById('content').innerHTML = `
     <div class="breadcrumb">
       <a class="bc-link" href="index.html">홈</a> ›
@@ -114,6 +132,23 @@ function renderForm() {
           <label>개정 사유</label>
           <input type="text" id="fRevNote" placeholder="이번 개정의 주요 변경 내용">
         </div>` : ''}
+
+        <!-- ── 첨부파일 섹션 ── -->
+        <div class="form-row">
+          <label>📎 첨부파일 (Google Drive 링크)</label>
+          <div class="attach-list" id="attachList">${attachHtml}</div>
+          <div class="attach-add-area">
+            <select id="newAttachType" class="attach-type-sel">
+              <option value="pdf">📄 원문 PDF</option>
+              <option value="form">📎 서식</option>
+            </select>
+            <input type="text" id="newAttachName" class="attach-name-inp" placeholder="파일명 (예: 학사규정_원문)">
+            <input type="text" id="newAttachUrl" class="attach-url-inp" placeholder="Google Drive 공유 링크 붙여넣기">
+            <button class="btn-attach-add" onclick="addAttach()">추가</button>
+          </div>
+          <p class="attach-help">Google Drive에서 파일을 업로드 → 우클릭 → 공유 → 링크 복사 후 붙여넣기</p>
+        </div>
+
         <div style="display:flex;gap:10px;margin-top:8px;">
           <button class="btn-primary" onclick="saveReg()">💾 저장</button>
           <button class="btn-secondary" onclick="history.back()">취소</button>
@@ -122,6 +157,68 @@ function renderForm() {
     </div>`;
 }
 
+// ── 첨부파일 관리 ──
+var _attachments = [];
+(function() {
+  if (editReg && editReg.attachments) {
+    _attachments = JSON.parse(JSON.stringify(editReg.attachments));
+  }
+})();
+
+// editReg 로드 후 attachments 초기화 (async 이후)
+function initAttachments() {
+  if (editReg && editReg.attachments) {
+    _attachments = JSON.parse(JSON.stringify(editReg.attachments));
+  } else {
+    _attachments = [];
+  }
+}
+
+function addAttach() {
+  var type = document.getElementById('newAttachType').value;
+  var name = document.getElementById('newAttachName').value.trim();
+  var url  = document.getElementById('newAttachUrl').value.trim();
+  if (!name) { showToast('⚠️ 파일명을 입력해주세요'); return; }
+  if (!url)  { showToast('⚠️ Google Drive 링크를 입력해주세요'); return; }
+  _attachments.push({ type: type, name: name, url: url });
+  document.getElementById('newAttachName').value = '';
+  document.getElementById('newAttachUrl').value = '';
+  refreshAttachList();
+  showToast('📎 첨부파일이 추가되었습니다');
+}
+
+function removeAttach(idx) {
+  _attachments.splice(idx, 1);
+  refreshAttachList();
+}
+
+function refreshAttachList() {
+  var el = document.getElementById('attachList');
+  if (!el) return;
+  if (!_attachments.length) { el.innerHTML = ''; return; }
+  el.innerHTML = _attachments.map(function(a, i) {
+    return '<div class="attach-item" data-idx="' + i + '">'
+      + '<span class="attach-icon">' + (a.type === 'pdf' ? '📄' : '📎') + '</span>'
+      + '<div class="attach-info">'
+      + '<span class="attach-name">' + escHtml(a.name) + '</span>'
+      + '<span class="attach-type">' + (a.type === 'pdf' ? '원문 PDF' : '서식') + '</span>'
+      + '</div>'
+      + '<a href="' + escHtml(a.url) + '" target="_blank" class="attach-link">열기</a>'
+      + '<button class="attach-del" onclick="removeAttach(' + i + ')">✕</button>'
+      + '</div>';
+  }).join('');
+}
+
+// ── 이력 정렬 함수 ──
+function sortHistoryByDate(history) {
+  return history.slice().sort(function(a, b) {
+    var da = a.revDate || a.date || '';
+    var db = b.revDate || b.date || '';
+    return da.localeCompare(db);
+  });
+}
+
+// ── 저장 ──
 async function saveReg() {
   const title   = document.getElementById('fTitle').value.trim();
   const group   = document.getElementById('fGroup').value;
@@ -138,22 +235,26 @@ async function saveReg() {
   const today = new Date().toISOString().split('T')[0];
   let reg;
   if (!isEdit) {
+    // 신규 등록
+    var newHistory = [{ revDate: revDate || today, date: date, note: '최초 제정', body: body }];
     reg = {
-      id: 'r' + Date.now(), title, group, category: cat, status,
-      version: 'v1.0', date, dept, body,
-      history: [{ revDate: revDate || today, date: date, note: '최초 제정', body }]
+      id: 'r' + Date.now(), title: title, group: group, category: cat, status: status,
+      version: 'v1.0', date: date, dept: dept, body: body,
+      history: newHistory,
+      attachments: _attachments
     };
   } else {
+    // 수정
     const changed = editReg.body !== body;
-    reg = { ...editReg, title, group, category: cat, status, date, dept, body };
+    reg = { ...editReg, title: title, group: group, category: cat, status: status, date: date, dept: dept, body: body, attachments: _attachments };
     if (changed) {
       reg.history = [...editReg.history, {
-        revDate: revDate || today, date,
-        note: revNote || '내용 수정', body
+        revDate: revDate || today, date: date,
+        note: revNote || '내용 수정', body: body
       }];
-    } else {
-      // 내용 변경 없어도 기타 정보는 업데이트
     }
+    // 이력을 개정일 기준으로 자동 정렬
+    reg.history = sortHistoryByDate(reg.history);
   }
 
   const btn = document.querySelector('.btn-primary');
@@ -168,6 +269,13 @@ async function saveReg() {
     btn.textContent = '💾 저장'; btn.disabled = false;
   }
 }
+
+// editReg가 async로 로드된 후 attachments 초기화
+var _origRenderForm = renderForm;
+renderForm = function() {
+  initAttachments();
+  _origRenderForm();
+};
 </script>
 </body>
 </html>
